@@ -1,0 +1,18 @@
+udev/*.rules		/lib/udev/rules.d
+udev/usb_dvb_module	/lib/udev
+etc
+usr
+images/animation/*.png	usr/share/yavdr/images/animation/
+images/*.png		usr/share/yavdr/images/
+images/*.gif		usr/share/yavdr/images/
+images/nocursor		usr/share/yavdr/images/
+images/noSignal4x3.mpg	var/lib/vdr/plugins/xine/
+images/noSignal16x9.mpg	var/lib/vdr/plugins/xine/
+images/nosignal.mpg	usr/share/libxine1-xvdr/
+themes/*		usr/share/themes/
+scripts/black.pcf	usr/share/fonts/X11/misc/
+scripts/svdrpd		usr/sbin/
+scripts/R50correct_videodirs	usr/share/vdr/recording-hooks
+scripts/R60copy_epgimage	usr/share/vdr/recording-hooks
+scripts/mount-loader	usr/lib/vdr/
+
