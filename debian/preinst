@@ -18,7 +18,10 @@ if [ install = "$1" -o upgrade = "$1" ]; then
       --divert /etc/rsyslog.conf.dontremove /etc/rsyslog.conf
    dpkg-divert --package yavdr-base --add --rename \
       --divert /etc/init/rsyslog.conf.dontremove /etc/init/rsyslog.conf
+<<<<<<< HEAD
+=======
    dpkg-divert --package yavdr-base --add --rename \
       --divert /etc/issue.dontremove /etc/issue
+>>>>>>> fix issus bug in base
 fi
 
