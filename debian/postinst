@@ -3,11 +3,10 @@
 case "$1" in
     configure)
         chown -R vdr:vdr /etc/xine
-        stop mhddfs-vdr || /bin/true
         chown -R vdr:vdr /srv/share/vdr
-        start mhddfs-vdr || /bin/true
 	chmod +x /usr/bin/vdr-mounter
         chmod 0440 /etc/sudoers.d/yavdr
+        start mhddfs-vdr || /bin/true
         ;;
 esac
 
