@@ -1,4 +1,12 @@
 #!/bin/bash
+# 
+# Example:
+# R50correct_videodirs <command> <basis videodir> <path to .rec>
+#
+# R50correct_videodirs move /video0 /video0/hitec/Doku/%Die_stille_Revolution_der_Mechatronik/2004-04-23.15\:25.50.99.rec
+# $1 <command>  move or rename
+# $2 <basis videodir> /video0
+# $3 <path to .rec> /video0/hitec/Doku/%Die_stille_Revolution_der_Mechatronik/2004-04-23.15\:25.50.99.rec
 #
 # Version 1.2 2007-01-31
 #
@@ -39,25 +47,30 @@
 #
 case $1 in 
 	move|rename)
-		echo "Fix $2"
+		echo "Fix $3" # Änderung von $2 nach $3
 		;;
 	*)
+		echo "Script needs three parameters. See example inside the script."
 		exit 0
 		;;
 esac
 
+# YAVDR (DEBIAN?) spezifisch sonst auskommentieren
 if [ -e /usr/lib/vdr/config-loader ]; then
 . /usr/lib/vdr/config-loader
 else
     exit 1
-fi 
+fi
+# bis hier! 
 
-VPATH="${2/%\/}" # .rec without trailing slash
+# VIDEO_DIR einkommentieren wenn kein YAVDR (DEBIAN?) 
+#VIDEO_DIR="${2/%\/}" # basis videodir without trailing slash
+
+VPATH="${3/%\/}" # .rec without trailing slash # geändert von "${2/%\/}" nach "${3/%\/}"
 
 VDIRSIZE=${#VIDEO_DIR}
 
-[ $# -ne 2 ]              && { echo -e "Script needs two parameters. See example inside the script."; exit 1; }
-[ -z "$VIDEO_DIR" ]        && { echo -e "Missing first parameter."; exit 1; }
+[ $# -ne 3 ]              && { echo -e "Script needs three parameters. See example inside the script."; exit 1; } # geändert von [ $# -ne 2 ] nach [ $# -ne 3 ]
 [ -d "$VPATH" ]           || { echo -e "$VPATH is not a directory!"; exit 1; }
 [ -n "${VPATH/*\.rec/}" ] && { echo -e "$VPATH is not a \".rec\" directory!"; exit 1; }
 
