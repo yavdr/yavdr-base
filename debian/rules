@@ -3,8 +3,3 @@
 %:
 	dh $@
 
-DESTDIR=$(CURDIR)/debian/yavdr-base
-
-override_dh_install:
-	dh_install
-	chmod +x $(DESTDIR)/lib/udev/usb_dvb_module
