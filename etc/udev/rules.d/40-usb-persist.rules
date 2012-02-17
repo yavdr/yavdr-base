@@ -1,2 +1,0 @@
-# echo 1 > $1/power/persist
-SUBSYSTEM=="usb" , DRIVER=="ftdi_sio", RUN +="/usr/bin/yavdr-persist %p" 
