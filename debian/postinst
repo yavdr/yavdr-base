@@ -1,6 +1,6 @@
 #!/bin/sh
 
-/usr/bin/process-template --owner root --group root --mode 0644 /etc/acpi/powerbtn.sh
+/usr/bin/process-template --owner root --group root --mode 0755 /etc/acpi/powerbtn.sh
 /usr/bin/process-template --owner root --group root --mode 0644 /etc/apt/apt.conf.d/90norecommends
 /usr/bin/process-template --owner root --group root --mode 0644 /etc/default/grub
 /usr/bin/process-template --owner root --group root --mode 0644 /etc/grub.d/05_debian_theme
