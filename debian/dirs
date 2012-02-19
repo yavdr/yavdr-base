@@ -2,3 +2,4 @@ etc
 var/lib/vdr/plugins/xine
 usr/share/libxine1-xvdr
 usr/share/yavdr/templates
+usr/share/yavdr/images
