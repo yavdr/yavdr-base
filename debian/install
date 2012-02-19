@@ -1,3 +1,5 @@
 images/noSignal4x3.mpg var/lib/vdr/plugins/xine/
 images/noSignal16x9.mpg var/lib/vdr/plugins/xine/
 images/nosignal.mpg usr/share/libxine1-xvdr/
+etc/*	etc/
+templates/* usr/share/yavdr/templates/
