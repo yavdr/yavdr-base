@@ -40,7 +40,7 @@ GRUB_HIDDEN_TIMEOUT=0
 GRUB_HIDDEN_TIMEOUT_QUIET=true
 GRUB_TIMEOUT="10"
 GRUB_DISTRIBUTOR=`lsb_release -i -s 2> /dev/null || echo Debian`
-GRUB_CMDLINE_LINUX_DEFAULT="vmalloc=256m quiet splash vga=792 noresume nohz=off acpi_enforce_resources=lax"
+GRUB_CMDLINE_LINUX_DEFAULT="quiet splash vga=792 noresume <?cs var:system.grub.options ?>"
 GRUB_CMDLINE_LINUX=""
 
 # Uncomment to disable graphical terminal (grub-pc only)
