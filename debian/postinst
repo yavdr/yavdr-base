@@ -32,6 +32,9 @@ case "$1" in
   /usr/bin/process-template --owner root --group root --mode 0644 /etc/pm/sleep.d/30force-reload
   /usr/bin/process-template --owner root --group root --mode 0440 /etc/sudoers.d/yavdr
 
+  # update grub
+  /usr/sbin/update-grub
+
   ;;
 
 esac
