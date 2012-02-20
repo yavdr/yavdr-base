@@ -7,3 +7,4 @@ images/nocursor		usr/share/yavdr/images/
 etc/*			etc/
 templates/*		usr/share/yavdr/templates/
 themes/*		usr/share/themes/
+conffiles/*		etc/yavdr/conffiles/
