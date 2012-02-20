@@ -1,5 +1,11 @@
 #!/bin/sh
 
+# prefill hdf
+. /usr/share/yavdr/helpers/hdf_prefill.sh
+
+hdf_prefill "system.shutdown" "s3"
+
+# temlate files
 /usr/bin/process-template --owner root --group root --mode 0755 /etc/acpi/powerbtn.sh
 /usr/bin/process-template --owner root --group root --mode 0644 /etc/apt/apt.conf.d/90norecommends
 /usr/bin/process-template --owner root --group root --mode 0644 /etc/default/grub
