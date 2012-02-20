@@ -13,11 +13,6 @@ case "$1" in
   hdf_prefill "system.sleep.module" "uswsusp"
   hdf_prefill "system.sleep.options" "-f"
 
-  # conffiles
-  . /usr/share/yavdr/helpers/conffiles
-  install_conffile yavdr-base /etc/acpi/powerbtn.sh
-  install_conffile yavdr-base /etc/update-manager/release-upgrades
-
   # temlate files
   /usr/bin/process-template --owner root --group root --mode 0755 /etc/acpi/powerbtn.sh
   /usr/bin/process-template --owner root --group root --mode 0644 /etc/apt/apt.conf.d/90norecommends
