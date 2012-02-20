@@ -7,7 +7,12 @@ case "$1" in
   # prefill hdf
   . /usr/share/yavdr/helpers/hdf_prefill.sh
 
+  hdf_prefill "system.grub.options" "vmalloc=256m nohz=off acpi_enforce_resources=lax"
   hdf_prefill "system.shutdown" "s3"
+  hdf_prefill "system.wakeup.method" "acpi"
+  hdf_prefill "system.wakeup.disable_usb" "1"
+  hdf_prefill "system.sleep.module" "uswsusp"
+  hdf_prefill "system.sleep.options" "-f"
 
   # temlate files
   /usr/bin/process-template --owner root --group root --mode 0755 /etc/acpi/powerbtn.sh
