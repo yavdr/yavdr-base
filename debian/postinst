@@ -1,26 +1,35 @@
 #!/bin/sh
 
-# prefill hdf
-. /usr/share/yavdr/helpers/hdf_prefill.sh
 
-hdf_prefill "system.shutdown" "s3"
+case "$1" in
+  configure)
 
-# temlate files
-/usr/bin/process-template --owner root --group root --mode 0755 /etc/acpi/powerbtn.sh
-/usr/bin/process-template --owner root --group root --mode 0644 /etc/apt/apt.conf.d/90norecommends
-/usr/bin/process-template --owner root --group root --mode 0644 /etc/default/grub
-/usr/bin/process-template --owner root --group root --mode 0644 /etc/grub.d/05_debian_theme
-/usr/bin/process-template --owner root --group root --mode 0644 /etc/grub.d/40_custom
-/usr/bin/process-template --owner root --group root --mode 0644 /etc/grub.d/50_custom
-/usr/bin/process-template --owner root --group root --mode 0644 /etc/init.d/force-fsck
-/usr/bin/process-template --owner root --group root --mode 0644 /etc/init.d/yavdr-shutdown
-/usr/bin/process-template --owner root --group root --mode 0644 /etc/init/usb-wakeup.conf
-/usr/bin/process-template --owner root --group root --mode 0644 /etc/initramfs-tools/conf.d/splash
-/usr/bin/process-template --owner root --group root --mode 0644 /etc/initramfs-tools/modules
-/usr/bin/process-template --owner root --group root --mode 0644 /etc/logrotate.conf
-/usr/bin/process-template --owner root --group root --mode 0644 /etc/pm/config.d/00module
-/usr/bin/process-template --owner root --group root --mode 0644 /etc/pm/config.d/10vdr_module
-/usr/bin/process-template --owner root --group root --mode 0644 /etc/pm/sleep.d/20vdr_sleep
-/usr/bin/process-template --owner root --group root --mode 0644 /etc/pm/sleep.d/30force-reload
-/usr/bin/process-template --owner root --group root --mode 0440 /etc/sudoers.d/yavdr
+  # prefill hdf
+  . /usr/share/yavdr/helpers/hdf_prefill.sh
 
+  hdf_prefill "system.shutdown" "s3"
+
+  # temlate files
+  /usr/bin/process-template --owner root --group root --mode 0755 /etc/acpi/powerbtn.sh
+  /usr/bin/process-template --owner root --group root --mode 0644 /etc/apt/apt.conf.d/90norecommends
+  /usr/bin/process-template --owner root --group root --mode 0644 /etc/default/grub
+  /usr/bin/process-template --owner root --group root --mode 0644 /etc/grub.d/05_debian_theme
+  /usr/bin/process-template --owner root --group root --mode 0644 /etc/grub.d/40_custom
+  /usr/bin/process-template --owner root --group root --mode 0644 /etc/grub.d/50_custom
+  /usr/bin/process-template --owner root --group root --mode 0644 /etc/init.d/force-fsck
+  /usr/bin/process-template --owner root --group root --mode 0644 /etc/init.d/yavdr-shutdown
+  /usr/bin/process-template --owner root --group root --mode 0644 /etc/init/usb-wakeup.conf
+  /usr/bin/process-template --owner root --group root --mode 0644 /etc/initramfs-tools/conf.d/splash
+  /usr/bin/process-template --owner root --group root --mode 0644 /etc/initramfs-tools/modules
+  /usr/bin/process-template --owner root --group root --mode 0644 /etc/logrotate.conf
+  /usr/bin/process-template --owner root --group root --mode 0644 /etc/pm/config.d/00module
+  /usr/bin/process-template --owner root --group root --mode 0644 /etc/pm/config.d/10vdr_module
+  /usr/bin/process-template --owner root --group root --mode 0644 /etc/pm/sleep.d/20vdr_sleep
+  /usr/bin/process-template --owner root --group root --mode 0644 /etc/pm/sleep.d/30force-reload
+  /usr/bin/process-template --owner root --group root --mode 0440 /etc/sudoers.d/yavdr
+
+  ;;
+
+esac
+
+exit 0
