@@ -7,7 +7,7 @@ Build-Depends: debhelper (>= 7.0.50~)
 
 Package: yavdr-base
 Architecture: all
-Depends: ${misc:Depends}, yavdr-utils, logrotate, acpid, python-software-properties
+Depends: ${misc:Depends}, yavdr-utils, logrotate, acpid, python-software-properties, pm-utils
 Description: scripts for startup, shutdown and s3
   scripts for startup, shutdown and s3 for yaVDR
 
