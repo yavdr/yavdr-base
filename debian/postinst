@@ -35,6 +35,9 @@ case "$1" in
   # update grub
   /usr/sbin/update-grub
 
+  # bash hack
+  ln -sf /bin/bash /bin/sh
+
   ;;
 
 esac
