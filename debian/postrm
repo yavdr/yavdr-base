@@ -6,6 +6,8 @@ if [ remove = "$1" ]; then
   . /usr/share/yavdr/helpers/conffiles
   remove_conffile yavdr-base /etc/acpi/powerbtn.sh
   remove_conffile yavdr-base /etc/update-manager/release-upgrades
+  remove_conffile yavdr-base /etc/default/grub
+  remove_conffile yavdr-base /etc/logrotate.conf
 
   dpkg-divert --package yavdr-base --remove --rename --divert /var/lib/vdr/plugins/xine/noSignal4x3.mpg.dontremove /var/lib/vdr/plugins/xine/noSignal4x3.mpg
   dpkg-divert --package yavdr-base --remove --rename --divert /var/lib/vdr/plugins/xine/noSignal16x9.mpg.dontremove /var/lib/vdr/plugins/xine/noSignal16x9.mpg
