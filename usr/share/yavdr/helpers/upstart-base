@@ -1,9 +1,12 @@
 #!/bin/bash
 
 start_frontend() {
-  CHECK_STATUS=$(LC_MESSAGES=C initctl status openbox)
-  if [[ "$CHECK_STATUS" == *running* ]]; then
-    initctl emit start-frontend ||:
+  CHECK_STATUS_1=$(LC_MESSAGES=C initctl status openbox)
+  CHECK_STATUS_2=$(LC_MESSAGES=C initctl status vdr)
+  if [[ "$CHECK_STATUS_1" == *running* ]]; then
+    if [[ "$CHECK_STATUS_2" == *running* ]]; then
+      initctl emit start-frontend ||:
+    fi
   fi
 }
 
