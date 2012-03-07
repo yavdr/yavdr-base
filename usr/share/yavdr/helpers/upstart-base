@@ -1,0 +1,12 @@
+#!/bin/bash
+
+start_frontend() {
+  CHECK_STATUS=$(LC_MESSAGES=C initctl status openbox)
+  if [[ "$CHECK_STATUS" == *running* ]]; then
+    initctl emit start-frontend ||:
+  fi
+}
+
+create_run_yavdr() {
+  mkdir -p /run/yavdr
+}

@@ -1,10 +1,11 @@
+etc/*			etc/
+usr/*			usr/
+conffiles/*		etc/yavdr/conffiles/
 images/noSignal4x3.mpg	var/lib/vdr/plugins/xine/
 images/noSignal16x9.mpg	var/lib/vdr/plugins/xine/
 images/nosignal.mpg	usr/share/libxine1-xvdr/
 images/*.png		usr/share/yavdr/images/
 images/*.gif		usr/share/yavdr/images/
 images/nocursor		usr/share/yavdr/images/
-etc/*			etc/
 templates/*		usr/share/yavdr/templates/
 themes/*		usr/share/themes/
-conffiles/*		etc/yavdr/conffiles/
