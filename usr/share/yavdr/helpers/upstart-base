@@ -2,7 +2,7 @@
 
 start_frontend() {
   CHECK_STATUS_1=$(LC_MESSAGES=C initctl status openbox)
-  CHECK_STATUS_2=$(LC_MESSAGES=C initctl status vdr)
+  CHECK_STATUS_2=$(LC_MESSAGES=C initctl status backend)
   if [[ "$CHECK_STATUS_1" == *running* ]]; then
     if [[ "$CHECK_STATUS_2" == *running* ]]; then
       initctl emit start-frontend ||:
