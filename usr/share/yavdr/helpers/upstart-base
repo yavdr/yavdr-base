@@ -1,15 +1,16 @@
 #!/bin/bash
 
 start_frontend() {
-  CHECK_STATUS_1=$(LC_MESSAGES=C initctl status openbox)
-  CHECK_STATUS_2=$(LC_MESSAGES=C initctl status backend)
+  CHECK_STATUS_1=$(LC_MESSAGES=C /sbin/initctl status openbox)
+  CHECK_STATUS_2=$(LC_MESSAGES=C /sbin/initctl status backend)
   if [[ "$CHECK_STATUS_1" == *running* ]]; then
     if [[ "$CHECK_STATUS_2" == *running* ]]; then
-      initctl emit start-frontend ||:
+      /sbin/initctl emit start-frontend ||:
     fi
   fi
 }
 
 create_run_yavdr() {
   mkdir -p /run/yavdr
+  chmod 777 /run/yavdr
 }
