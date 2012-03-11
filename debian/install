@@ -1,5 +1,6 @@
 etc/*			etc/
 usr/*			usr/
+var/*			var/
 conffiles/*		etc/yavdr/conffiles/
 images/noSignal4x3.mpg	var/lib/vdr/plugins/xine/
 images/noSignal16x9.mpg	var/lib/vdr/plugins/xine/
