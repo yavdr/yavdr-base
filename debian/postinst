@@ -3,6 +3,13 @@
 case "$1" in
   configure)
 
+  # conffiles
+  . /usr/share/yavdr/helpers/conffiles
+  install_conffile yavdr-base /etc/acpi/powerbtn.sh
+  install_conffile yavdr-base /etc/default/grub
+  install_conffile yavdr-base /etc/logrotate.conf
+  install_conffile yavdr-base /etc/update-manager/release-upgrades
+
   # prefill hdf
   . /usr/share/yavdr/helpers/hdf_prefill
 

@@ -3,3 +3,6 @@
 %:
 	dh $@
 
+override_dh_installdeb:
+	dh_installdeb
+	rm debian/yavdr-base/DEBIAN/conffiles
