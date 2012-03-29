@@ -410,7 +410,12 @@
     <mousebind button="Left" action="Press">
       <action name="Focus"/>
       <action name="Raise"/>
-    </mousebind>
+    </mousebind>steffen_b:    <application title="softhddevice">
+steffen_b:      <decor>no</decor>
+steffen_b:     <maximized>true</maximized>
+steffen_b:     <skip_pager>yes</skip_pager>
+steffen_b:     <skip_taskbar>yes</skip_taskbar>
+steffen_b:  </application>
     <mousebind button="Left" action="Drag">
       <action name="Resize"/>
     </mousebind>
@@ -711,32 +716,38 @@
 -->
 
 <!-- match all windows, and remove their decorations -->
-   <application class="*">
-     <decor>yes</decor>
+  <application class="*">
+    <decor>yes</decor>
     <maximized>false</maximized>
- </application>
+  </application>
 
-   <application name="VDR*">
-     <decor>no</decor>
+  <application name="VDR*">
+    <decor>no</decor>
     <maximized>true</maximized>
     <skip_pager>yes</skip_pager>
     <skip_taskbar>yes</skip_taskbar>
- </application>
+  </application>
 
-   <application name="xine*">
-     <decor>no</decor>
+  <application name="xine*">
+    <decor>no</decor>
     <maximized>true</maximized>
     <skip_pager>yes</skip_pager>
     <skip_taskbar>yes</skip_taskbar>
- </application>
+  </application>
 
-   <application name="dclock">
-     <decor>no</decor>   
+  <application name="dclock">
+    <decor>no</decor>   
     <maximized>false</maximized>
     <skip_pager>yes</skip_pager>
     <skip_taskbar>yes</skip_taskbar>
- </application>
-
+  </application>
+   
+  <application title="softhddevice">
+    <decor>no</decor>
+    <maximized>true</maximized>
+    <skip_pager>yes</skip_pager>
+    <skip_taskbar>yes</skip_taskbar>
+  </application>
 </applications>
 
 </openbox_config>
