@@ -4,6 +4,6 @@ begin
     prog = irexec
     button = KEY_PROG2
     config = stop vdr-frontend ; start xbmc
-    config = stop xbmc ;start vdr-frontend
+    config = stop xbmc ; start vdr-frontend
 end
 
