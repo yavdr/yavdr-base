@@ -2,8 +2,8 @@
 
 begin
     prog = irexec
-    button = taskswitcher
+    button = KEY_PROG2
     config = stop vdr-frontend ; start xbmc
-    config = start vdr-frontend ; stop xbmc
+    config = stop xbmc ;start vdr-frontend
 end
 
