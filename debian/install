@@ -10,3 +10,4 @@ images/*.gif		usr/share/yavdr/images/
 images/nocursor		usr/share/yavdr/images/
 templates/*		usr/share/yavdr/templates/
 themes/*		usr/share/themes/
+scripts/*		usr/bin/

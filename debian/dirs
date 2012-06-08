@@ -1,6 +1,6 @@
 etc
-usr
 var
+usr/bin
 var/lib/vdr/plugins/xine
 usr/share/libxine1-xvdr
 usr/share/yavdr/templates
