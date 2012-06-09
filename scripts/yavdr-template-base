@@ -14,7 +14,6 @@
 /usr/bin/process-template --owner root --group root --mode 0644 /etc/logrotate.conf
 /usr/bin/process-template --owner root --group root --mode 0644 /etc/pm/config.d/00module
 /usr/bin/process-template --owner root --group root --mode 0644 /etc/pm/config.d/10vdr_module
-/usr/bin/process-template --owner root --group root --mode 0644 /etc/pm/sleep.d/20vdr_sleep
 /usr/bin/process-template --owner root --group root --mode 0644 /etc/pm/sleep.d/30force-reload
 /usr/bin/process-template --owner root --group root --mode 0440 /etc/sudoers.d/yavdr
 
