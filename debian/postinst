@@ -11,14 +11,12 @@ case "$1" in
   install_conffile yavdr-base /etc/update-manager/release-upgrades
 
   # prefill hdf
-  . /usr/share/yavdr/helpers/hdf_prefill
-
-  hdf_prefill "system.grub.options" "vmalloc=256m nohz=off acpi_enforce_resources=lax"
-  hdf_prefill "system.shutdown" "s3"
-  hdf_prefill "system.wakeup.method" "acpi"
-  hdf_prefill "system.wakeup.disable_usb" "1"
-  hdf_prefill "system.sleep.module" "uswsusp"
-  hdf_prefill "system.sleep.options" "-f"
+  yavdr-db-tool -k system.grub.options -a preset -v "vmalloc=256m nohz=off acpi_enforce_resources=lax"
+  yavdr-db-tool -k system.shutdown -a preset -v "s3"
+  yavdr-db-tool -k system.wakeup.method -a preset -v "acpi"
+  yavdr-db-tool -k system.wakeup.disable_usb -a preset -v "1"
+  yavdr-db-tool -k system.sleep.module -a preset -v "uswsusp"
+  yavdr-db-tool -k system.sleep.options -a preset -v "-f"
 
   # temlate files
   /usr/bin/yavdr-template-base
