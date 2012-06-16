@@ -1,2 +1,2 @@
-vdr ALL=NOPASSWD: /sbin/reboot
-vdr ALL=NOPASSWD: /sbin/initctl *
+yavdr ALL=NOPASSWD: /sbin/reboot
+yavdr ALL=NOPASSWD: /sbin/initctl *
