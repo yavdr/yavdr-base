@@ -31,9 +31,9 @@ case "$1" in
     adduser --system --uid 999 --home /yavdr --shell /bin/bash --gecos "yaVDR user" --ingroup yavdr yavdr
     # default password is yavdr
     usermod -p "\$6\$sAxoZXNf\$8eHcSic1cP/b.Dmn5BCrEg5FJbA/SKXobA3/UUK7EeXGBGOdwc11ZGRnkDxjmOVsXyxXKi1kDIzNPZu1Q9ree/" yavdr
+    adduser yavdr video
+    adduser yavdr audio
   fi
-  adduser yavdr video
-  adduser yavdr audio
   ;;
 
 esac
