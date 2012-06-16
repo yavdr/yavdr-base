@@ -1,5 +1,6 @@
-#!/bin/bash
+#!/bin/bash -e
 
+logger -t yavdr-template-all "templating"
 for SCRIPT in `find /usr/bin/yavdr-template-* | grep -v $0 | egrep 'yavdr-template-[a-z0-9]+$' `; do
   $SCRIPT
 done
