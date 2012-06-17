@@ -17,10 +17,10 @@ case "$1" in
   yavdr-db-tool -a preset -k system.wakeup.disable_usb -v "1"
 
   # temlate files
-  /usr/bin/yavdr-template-base
+  yavdr-template-base
 
   # update grub
-  /usr/sbin/update-grub
+  update-grub
 
   # add yavdr group
   if ! getent group | grep -q "^yavdr:" ; then
@@ -38,6 +38,10 @@ case "$1" in
   adduser yavdr audio
   adduser yavdr cdrom
   adduser yavdr plugdev
+  adduser yavdr sudo
+  adduser yavdr adm
+  adduser yavdr sambashare
+  adduser yavdr dip
   ;;
 
 esac
