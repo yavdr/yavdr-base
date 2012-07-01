@@ -1,5 +1,5 @@
 #!/bin/bash
-# 
+#
 # Example:
 # R50correct_videodirs <command> <basis videodir> <path to .rec>
 #
@@ -45,7 +45,7 @@
 #
 # - first public release
 #
-case $1 in 
+case $1 in
 	move|rename)
 		echo "Fix $3" # Änderung von $2 nach $3
 		;;
@@ -61,9 +61,9 @@ if [ -e /usr/lib/vdr/config-loader ]; then
 else
     exit 1
 fi
-# bis hier! 
+# bis hier!
 
-# VIDEO_DIR einkommentieren wenn kein YAVDR (DEBIAN?) 
+# VIDEO_DIR einkommentieren wenn kein YAVDR (DEBIAN?)
 #VIDEO_DIR="${2/%\/}" # basis videodir without trailing slash
 
 VPATH="${3/%\/}" # .rec without trailing slash # geändert von "${2/%\/}" nach "${3/%\/}"
@@ -105,16 +105,18 @@ do
   # QFILE=/home/vdr1/v0/hitec/Doku/%Die_stille_Revolution_der_Mechatronik/2004-04-23.15:25.50.99.rec/001.vdr
   # QDIR=hitec/Doku/%Die_stille_Revolution_der_Mechatronik/2004-04-23.15:25.50.99.rec
   # QPART=home/vdr1/v0
+
   QFILE="$VPATH/$VDRFILE"
+  VDRFILESIZE=${#VDRFILE}
   SIZE=${#QFILE}
-  QDIR=${QFILE:${VDIRSIZE}+1:${SIZE}-${VDIRSIZE}-9}
+  QDIR=${QFILE:${VDIRSIZE}+1:${SIZE}-${VDIRSIZE}-${VDRFILESIZE}-1}
   QPART=${QFILE:1:${VDIRSIZE}-1}
 
   # calculate the target path
   # same as above, but ZFILE is the dereferenced link from ???.vdr
   ZFILE=$(find "$VPATH/$VDRFILE" -printf "%l")
   SIZE=${#ZFILE}
-  ZDIR=${ZFILE:${VDIRSIZE}+1:${SIZE}-${VDIRSIZE}-9}
+  ZDIR=${ZFILE:${VDIRSIZE}+1:${SIZE}-${VDIRSIZE}-${VDRFILESIZE}-1}
   ZPART=${ZFILE:1:${VDIRSIZE}-1}
 
   # remove double slashes
@@ -146,7 +148,7 @@ do
   [ -z "$FILES" ] && { echo -e "FILES is empty!"; exit 1; }
 
   echo "Now moving files..."
-  
+
   # ... and move them to the new target dir
   for i in $FILES
   do
