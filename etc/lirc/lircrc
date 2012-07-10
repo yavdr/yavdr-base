@@ -7,3 +7,19 @@ begin
     config = stop xbmc ; start vdr-frontend
 end
 
+begin
+    prog = irexec
+    button = KEY_STOP
+    button = KEY_STOP
+    config = kill -9 $(pidof xbmc.bin -o $(status xbmc | grep -o '[0-9]*$'))
+end
+
+begin
+    prog = irexec
+    button = KEY_STOP
+    button = KEY_STOP
+    button = KEY_STOP
+    button = KEY_STOP
+    config = restart xbmc
+end
+
