@@ -743,6 +743,13 @@
     <skip_pager>yes</skip_pager>
     <skip_taskbar>yes</skip_taskbar>
   </application>
+   
+  <application name="play control">
+    <decor>no</decor>
+    <maximized>true</maximized>
+    <skip_pager>yes</skip_pager>
+    <skip_taskbar>yes</skip_taskbar>
+  </application>
 </applications>
 
 </openbox_config>
