@@ -744,7 +744,7 @@
     <skip_taskbar>yes</skip_taskbar>
   </application>
    
-  <application name="play control">
+  <application title="play control">
     <decor>no</decor>
     <maximized>true</maximized>
     <skip_pager>yes</skip_pager>
