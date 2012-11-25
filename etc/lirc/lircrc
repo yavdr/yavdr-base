@@ -3,7 +3,7 @@
 begin
     prog = irexec
     button = KEY_PROG2
-    config = stop vdr-frontend ; start xbmc
-    config = stop xbmc ;start vdr-frontend
+    config = /usr/bin/frontend-dbus-send /frontend start_xbmc
+    config = /usr/bin/frontend-dbus-send /frontend stop_xbmc
 end
 
