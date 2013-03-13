@@ -1,9 +1,0 @@
-<?xml version="1.0" standalone='no'?>
-<!DOCTYPE service-group SYSTEM "avahi-service.dtd">
-<service-group>
-<name replace-wildcards="yes">SVDRP on %h</name> ## Name
-<service protocol="ipv4">
-       <type>_svdrp._tcp</type>
-       <port>6419</port>
-</service>
-</service-group>
