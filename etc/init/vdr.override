@@ -1,0 +1,3 @@
+# yaVDR is using the Upstart integration of the dbus2vdr plugin
+# therefore we must "expect stop"
+expect stop
