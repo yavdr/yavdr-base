@@ -94,7 +94,6 @@ def main():
             gobject.MainLoop().run()
     except:
         exit()
-
     
        
         
