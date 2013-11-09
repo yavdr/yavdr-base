@@ -1,0 +1,41 @@
+#!/usr/bin/python2
+# -*- coding: utf-8 -*-
+# Author: Alexander Grothe <seahawk986@gmx.de> Nov 2013
+#
+# This program is free software: you can redistribute it and/or modify
+#  * it under the terms of the GNU General Public License as published by
+#  * the Free Software Foundation, either version 3 of the License, or
+#  * (at your option) any later version.
+#  *
+#  * This program is distributed in the hope that it will be useful,
+#  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  * GNU General Public License for more details.
+#  *
+#  * You should have received a copy of the GNU General Public License
+#  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+# this script is a replacement for udisks-umountall posted by Steffen Barzus ( https://bugs.launchpad.net/udisks-automounter/+bug/660020/comments/2 )
+# the dbus interface for UDisks (the version in Ubuntu precise is quite old) is described at http://udisks.freedesktop.org/docs/1.0.5/ref-dbus.html
+# 
+# It's single purpose is to list the /dev/* path for all external devices mounted by udisks so https://github.com/yavdr/yavdr-base/blob/master/usr/bin/vdr-mounter#L30 can umount them.
+
+import dbus
+
+bus = dbus.SystemBus()
+ud_manager_obj = bus.get_object("org.freedesktop.UDisks", "/org/freedesktop/UDisks")
+ud_manager = dbus.Interface(ud_manager_obj, 'org.freedesktop.UDisks')
+
+for dev in ud_manager.EnumerateDevices():
+    device_obj = bus.get_object("org.freedesktop.UDisks", dev)
+    device_props = dbus.Interface(device_obj, dbus.PROPERTIES_IFACE)
+    if (device_props.Get('org.freedesktop.UDisks.Device', 'IdUsage') == "filesystem"
+       and
+           device_props.Get('org.freedesktop.UDisks.Device', 'DeviceIsMounted')
+       and not
+           device_props.Get('org.freedesktop.UDisks.Device', 'DeviceIsSystemInternal')
+       and not
+           device_props.Get('org.freedesktop.UDisks.Device', 'DevicePresentationHide')
+       and not
+           device_props.Get('org.freedesktop.UDisks.Device', 'DevicePresentationNopolicy')):
+       print device_props.Get('org.freedesktop.UDisks.Device', 'DeviceFile')
