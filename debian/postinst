@@ -7,6 +7,7 @@ case "$1" in
         chown -R vdr:vdr /var/lib/vdr
         chmod +x /usr/bin/vdr-mounter
         chmod +x /usr/bin/ps3remote
+        chmod +x /usr/bin/udisks-umountall
         chmod 0440 /etc/sudoers.d/yavdr
         start mhddfs-vdr || /bin/true
         if [ -x /usr/bin/dbset -a -f /etc/yavdr/yavdr-release ]; then 
