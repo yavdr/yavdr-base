@@ -14,12 +14,16 @@ class Config:
         argparser.add_argument('-c', '--cardnumber', metavar='CARDNUMBER',
                                dest='cards', action='append', default=None, type=int,
                                help='sound device card number, e.g. -c 0')
+        argparser.add_argument('-t', '--timeout', metavar='TIMEOUT',
+                               dest='timeout', default=60, type=int,
+                               help='wait x seconds before giving up (default: 30 s)')
         self.args = vars(argparser.parse_args())
 
 
 class DetectSound:
     def __init__(self):
         self.config = Config()
+        self.timeout = gobject.timeout_add((1000*self.config.args['timeout']), self.on_timeout)
         self.wanted_cards = None
         wanted_card_numbers = self.config.args['cards']
         if wanted_card_numbers:
@@ -54,6 +58,9 @@ class DetectSound:
                sys.exit(0)
            else:
                print "waiting for %s" % self.wanted_cards
+
+    def on_timeout(self):
+       sys.exit(0)
 
 
 if __name__ == '__main__':
