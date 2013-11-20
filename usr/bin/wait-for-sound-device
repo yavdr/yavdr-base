@@ -1,0 +1,63 @@
+#!/usr/bin/python2
+
+import argparse
+import gobject
+import os
+import pyudev
+from pyudev.glib import GUDevMonitorObserver
+import sys
+
+class Config:
+    def __init__(self):
+        argparser = argparse.ArgumentParser(
+                                      description='wait for initialized sound card(s)')
+        argparser.add_argument('-c', '--cardnumber', metavar='CARDNUMBER',
+                               dest='cards', action='append', default=None, type=int,
+                               help='sound device card number, e.g. -c 0')
+        self.args = vars(argparser.parse_args())
+
+
+class DetectSound:
+    def __init__(self):
+        self.config = Config()
+        self.wanted_cards = None
+        wanted_card_numbers = self.config.args['cards']
+        if wanted_card_numbers:
+            self.wanted_cards = []
+            for card in wanted_card_numbers:
+                self.wanted_cards.append("card%d" % card)
+        if self.wanted_cards:
+            context = pyudev.Context()
+            print "waiting for %s" % self.wanted_cards
+            monitor = pyudev.Monitor.from_netlink(context)
+            monitor.filter_by(subsystem='sound')
+            observer = GUDevMonitorObserver(monitor)
+            observer.connect('device-event', self.udev_event)
+            monitor.start()
+            print "probing existing devices for %s" % self.wanted_cards
+            for device in context.list_devices(subsystem='sound', SOUND_INITIALIZED='1'):
+                if device.sys_name in self.wanted_cards:
+                    print "found %s" % device.sys_name
+                    self.wanted_cards.pop(self.wanted_cards.index(device.sys_name))
+                    if len(self.wanted_cards) == 0:
+                        sys.exit(0)
+        else: sys.exit(0)
+
+    def udev_event(self, observer, action, device):
+       if ((action in ['add', 'change'])
+           and device.sys_name in self.wanted_cards
+           and ('SOUND_INITIALIZED' in device)
+           and device['SOUND_INITIALIZED'] == '1'):
+           print "got a initialized %s" % device.sys_name
+           self.wanted_cards.remove(device.sys_name)
+           if len(self.wanted_cards) == 0:
+               sys.exit(0)
+           else:
+               print "waiting for %s" % self.wanted_cards
+
+
+if __name__ == '__main__':
+    detectsound = DetectSound()
+    loop = gobject.MainLoop()
+    loop.run()
+

@@ -8,6 +8,7 @@ case "$1" in
         chmod +x /usr/bin/vdr-mounter
         chmod +x /usr/bin/ps3remote
         chmod +x /usr/bin/udisks-umountall
+        chmod +x /usr/bin/wait-for-sound-device
         chmod 0440 /etc/sudoers.d/yavdr
         start mhddfs-vdr || /bin/true
         if [ -x /usr/bin/dbset -a -f /etc/yavdr/yavdr-release ]; then 
