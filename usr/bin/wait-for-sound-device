@@ -15,7 +15,7 @@ class Config:
                                dest='cards', action='append', default=None, type=int,
                                help='sound device card number, e.g. -c 0')
         argparser.add_argument('-t', '--timeout', metavar='TIMEOUT',
-                               dest='timeout', default=60, type=int,
+                               dest='timeout', default=30, type=int,
                                help='wait x seconds before giving up (default: 30 s)')
         self.args = vars(argparser.parse_args())
 
