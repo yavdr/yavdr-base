@@ -49,11 +49,17 @@ class Main:
         logging.info("VDR Ready")
         self.vdrStatus == 1
         self.proc = subprocess.Popen("exec " + self.cmd, shell=True, env=self.environ)
-        status = self.proc.wait()
-        print("child process ended with exit code:", status)
-        if self.dbus2vdr.checkVDRstatus():
-            print("restarting process")
-            self.onStart()
+        self.pid = self.proc.pid
+        self.child = GObject.child_watch_add(self.pid, self.onExit)
+
+    def onExit(self, *args, **kwargs):
+        try:
+            print(args, kwargs)
+            print("child process ended")
+            if self.dbus2vdr.checkVDRstatus():
+                print("restarting process")
+                self.onStart()
+        except: pass
 
     def onStop(self, *args, **kwargs):
         logging.info("VDR stopped")
