@@ -1,3 +1,5 @@
+#1/usr/bin/python2
+# -*- coding: utf-8 -*-
 import sys
 import os
 import codecs
@@ -13,10 +15,10 @@ from pyudev.glib import GUDevMonitorObserver
 import dbus
 import dbus.service
 from dbus.mainloop.glib import DBusGMainLoop
+from dbus2vdr import DBus2VDR
 
 DBusGMainLoop(set_as_default=True)
 bus = dbus.SystemBus()
-
 class dbusRemote():
     '''wrapper for remote interface provided by the dbus2vdr plugin'''
     def __init__(self):
@@ -55,7 +57,7 @@ class dbusShutdown():
         return self.dbusshutdown.ManualStart(dbus_interface=self.interface)
 
     def confirmShutdown(self,user=False):
-        code, message, shutdownhooks, message = self.dbusshutdown.ConfirmShutdown(dbus.Boolean(user),dbus_interface=self.interface)
+        code, message, shutdownhooks, message = self.dbusshutdown.ConfirmShutdown(dbus.Boolean(user),dbus_interface=self.interface, timeout=120) # wait up to 120 second for a reply, because the lifeguard-addon is as fast as a snail
         if code in [250,990]:
             return True
         else:
@@ -71,13 +73,24 @@ class dbusSetup():
     def vdrsetupget(self,option):
         return self.dbussetup.Get(dbus.String(option),dbus_interface=self.interface)
 
+class dbusTimer():
+    def __init__(self):
+        self.dbustimer = bus.get_object("de.tvdr.vdr","/Timers")
+        self.interface = 'de.tvdr.vdr.timer'
+    def wakeup_for_Timer(self):
+        status,tid,rel,startt,stopt,event = self.dbustimer.Next(dbus_interface=self.interface)
+        if status == 250 and (rel <= (6 * 60)):
+            return True
+        else:                                                                                                        return False
+
 def get_dbusPlugins():
     '''wrapper for dbus plugin list'''
     dbusplugins = bus.get_object("de.tvdr.vdr","/Plugins")
     raw = dbusplugins.List(dbus_interface="de.tvdr.vdr.plugin")
     plugins = {}
-    for name, version in raw:
-        plugins[name]=version
+    if len(raw) > 0:
+        for name, version in raw:
+            plugins[name]=version
     return plugins
 
 
@@ -118,26 +131,33 @@ def detach():
     subprocess.call(["/usr/bin/feh","--bg-fill",settings.conf['logo_detached']], env=settings.env)
 
     frontend.detach()
-    graphtft_switch()
+    graphtftng_switch()
     return True
 
-def send_shutdown(user=False):
-    if shutdown.confirmShutdown(user):
+def send_shutdown():
+    try:
+        if shutdown.confirmShutdown():
+            remote.enable()
+            remote.sendkey("POWER")
+            remote.disable()
+    except Exception as error:
+        syslog.syslog(error)
         remote.enable()
         remote.sendkey("POWER")
         remote.disable()
-    return True
+    finally:
+        return True
 
 def soft_detach():
     detach()
     settings.timer = gobject.timeout_add(300000,send_shutdown)
     return False
 
-def graphtft_switch():
-    if settings.graphtft:
-        dbusgraph = bus.get_object("de.tvdr.vdr","/Plugins/graphtft")
+def graphtftng_switch():
+    if settings.graphtftng:
+        dbusgraph = bus.get_object("de.tvdr.vdr","/Plugins/graphtftng")
         if settings.frontend_active == 0:
-           dbusgraph.SVDRPCommand(dbus.String('TVIEW'),dbus.String(settings.conf['graphtft_view']),dbus_interface='de.tvdr.vdr.plugin')
+           dbusgraph.SVDRPCommand(dbus.String('TVIEW'),dbus.String(settings.conf['graphtftng_view']),dbus_interface='de.tvdr.vdr.plugin')
         elif settings.frontend_active == 1:
            dbusgraph.SVDRPCommand(dbus.String('RVIEW'),dbus.String(None),dbus_interface='de.tvdr.vdr.plugin')
 
@@ -149,18 +169,17 @@ def resume(status):
         frontend.resume()
     elif status == "SUSPEND_DETACHED":
         frontend.attach()
-    graphtft_switch()
-
+    graphtftng_switch()
+    
 
 class Settings():
     ''' read and store configuration, handle input devices using udev'''
     def __init__(self):
         global gobject
         self.frontend_active = 0
-        self.external_prog = 0
         self.env = os.environ
         self.timer = None
-
+        self.updateDisplay()
         self.manualstart = shutdown.manualstart()
         try:
             self.acpi_wakeup = self.check_acpi()
@@ -175,40 +194,35 @@ class Settings():
         self.inputEventFormat = 'llHHi'
         self.inputEventSize = 24
         # on 32-Bit systems try
-        '''
-        inputEventFormat = 'iihhi'    # (untested)
-        inputEventSize = 16           # (untested)
-        '''
+        # inputEventFormat = 'iihhi'
+        # inputEventSize = 16
+        # (untested)
         self.conf = {
         'logo_attached':"/usr/share/yavdr/images/yavdr_logo.png",
         'logo_detached':"/usr/share/yavdr/images/yaVDR_background_detached.jpg",
         'key_detach':"KEY_PROG1",
-        'key_xbmc':"KEY_PROG2",
         'key_power':"KEY_POWER2",
         'start_always_detached':'0',
-        'graphtft_view':"NonLiveTv",
-        'user':'vdr',
-        'display':':0'
+        'graphtftng_view':"NonLiveTv"
         }
         for i in self.conf:
             if i in os.environ:
                 self.conf[i] = os.environ[i]
-        self.check_graphtft()
-        self.updateDisplay()
+        self.check_graphtftng()
         self.get_event_devices()
-        print "USER is %s"%(self.conf['user'])
 
-    def check_graphtft(self):
+    def check_graphtftng(self):
         plugins = get_dbusPlugins()
-        if 'graphtft' in plugins:
-            #print "found graphtft"
-            self.graphtft = True
+        if 'graphtftng' in plugins:
+            #print "found graphtftng"
+            self.graphtftng = True
         else:
-            self.graphtft = False
+            self.graphtftng = False
+
 
     def get_event_devices(self):
         '''filter all connected input devices and watch those not used by eventlircd'''
-        for device in self.context.list_devices(subsystem='input',ID_INPUT_KEY=True):
+        for device in self.context.list_devices(subsystem='input',ID_INPUT_KEYBOARD=True):
             if device.sys_name.startswith('event') and not (('eventlircd_enable' in device) or ('eventlircd_enable' in device and device['eventlircd_enable'] is ('true'))):
                 self.paths[device['DEVNAME']] = open(device['DEVNAME'],'rb')
                 syslog.syslog(codecs.encode(u"watching %s: %s"%(device.parent['NAME'], device['DEVNAME']),'utf-8'))
@@ -228,23 +242,13 @@ class Settings():
                 self.devices[device['DEVNAME']] = gobject.io_add_watch(self.paths[device['DEVNAME']], gobject.IO_IN, self.evthandler)
         elif action == "remove" and 'DEVNAME' in device:
             try:
-                self.paths[device['DEVNAME']].close()
+	            self.paths[device['DEVNAME']].close()
             except:
                 pass
             try:
                 gobject.source_remove(self.devices[device['DEVNAME']])
                 syslog.syslog("removed %s"%device['DEVNAME'])
             except: pass #device already removed from watchlist
-
-    def SetTimeout(self,timeout_s,call_f):
-        timeout_ms = 1000 * timeout_s
-        self.timer = gobject.timeout_add(timeout_ms,call_f)
-
-    def CancelTimeout(self):
-        try:
-            gobject.source_remove(self.timer)
-        except:
-            pass
 
     def GetActiveWindowTitle(self):
         '''get title of active window'''
@@ -260,32 +264,32 @@ class Settings():
         (time1, time2, typeev, code, value) = struct.unpack(self.inputEventFormat, event)
 
         if typeev == 1 and code == 115: # code 115 = KEY_VOLUMEUP
-           remote.sendkey("Volume+")
-        elif typeev == 1 and code == 114: # code 115 = KEY_VOLUMEDOWN
+           remote.sendkey("Volume+") 
+	if typeev == 1 and code == 114: # code 115 = KEY_VOLUMEDOWN
            remote.sendkey("Volume-")
-        elif typeev == 1 and code == 113 and value == 1: # code 115 = KEY_MUTE
+        if typeev == 1 and code == 113 and value == 1: # code 115 = KEY_MUTE
            remote.sendkey("Mute")
-        elif typeev == 1 and code == 172 and value == 1: # code 172 = KEY_HOMEPAGE - toggle frontend (attach/detach)
+        if typeev == 1 and code == 172 and value == 1: # code 172 = KEY_HOMEPAGE - toggle frontend (attach/detach) 
            if self.frontend_active == 1:
                syslog.syslog("detached frontend")
                detach()
            elif self.frontend_active == 0:
                syslog.syslog("attached frontend")
                resume(frontend.status())
-        elif self.frontend_active == 0:
-          try:
+        if self.frontend_active == 0:
            if typeev == 1 and code == 28 and self.GetActiveWindowTitle() == 'WM_NAM': # resume frontend on KEY_ENTER if no window has focus
                syslog.syslog("frontend attached by keyboard activity")
                resume(frontend.status())
-          except: pass
         return True
 
 
     def updateDisplay(self):
-        self.env["DISPLAY"] = self.conf['display'] #+self.getTempDisplay()
+        self.env["DISPLAY"] = ":1"+self.getTempDisplay()
 
     def getTempDisplay(self):
-        tempdisplay = ".0"
+        tempdisplay = subprocess.check_output(["dbget","vdr.tempdisplay"])
+        if len(tempdisplay) == 0:
+            tempdisplay = ".0"
         return tempdisplay
 
     def check_acpi(self):
@@ -306,59 +310,19 @@ class Settings():
             return True
 
 class dbusService(dbus.service.Object):
-    def __init__(self):
+    def __init__(self, settings):
         bus_name = dbus.service.BusName('de.yavdr.frontend', bus=bus)#dbus.SessionBus())
         dbus.service.Object.__init__(self, bus_name, '/frontend')
+        self.settings = settings
 
-    @dbus.service.method('de.yavdr.frontend',in_signature='i',out_signature='b')
-    def deta(self,active=0):
+    @dbus.service.method('de.yavdr.frontend',out_signature='b')
+    def deta(self):
         detach()
-        if active == 1:
-            settings.frontend_active = 1
-            settings.external_prog = 1
         return True
 
     @dbus.service.method('de.yavdr.frontend',out_signature='b')
     def atta(self):
         resume(frontend.status())
-        settings.external_prog = 0
-        return True
-
-    @dbus.service.method('de.yavdr.frontend',out_signature='b')
-    def start(self):
-        startup()
-        return True
-
-    @dbus.service.method('de.yavdr.frontend',out_signature='b')
-    def toggle(self):
-        if settings.frontend_active == 0 and settings.external_prog == 0:
-            resume(frontend.status())
-            settings.external_prog = 0
-            settings.frontend_active = 1
-        else:
-            detach()
-            settings.external_prog = 0
-            settings.frontend_active = 0
-        return True
-
-    @dbus.service.method('de.yavdr.frontend',out_signature='b')
-    def start_xbmc(self):
-        settings.external_prog = 1
-        start_xbmc()
-        return True
-
-    @dbus.service.method('de.yavdr.frontend',out_signature='b')
-    def shutdown(self):
-        remote.enable()
-        remote.sendkey("POWER")
-        if settings.frontend_active == 0:
-            remote.disable()
-        settings.timer = gobject.timeout_add(15000,soft_detach)
-        return True
-
-    @dbus.service.method('de.yavdr.frontend',out_signature='b')
-    def check_shutdown(self):
-        send_shutdown(user=True)
         return True
 
     @dbus.service.method('de.yavdr.frontend',in_signature='s',out_signature='b')
@@ -370,137 +334,166 @@ class dbusService(dbus.service.Object):
         else:
             return False
 
-def handler(sock, *args):
-    '''callback function for activity on eventlircd socket'''
-    buf = sock.recv(1024)
-    if not buf:
-        sock.close()
-        try_connection()
-    lines = string.split(buf, "\n")
-    for line in lines[:-1]:
-      if settings.external_prog == 1: pass
-      else:
-        try: gobject.source_remove(settings.timer)
-        except: pass
-        try:  code,count,cmd,device = string.split(line, " ")[:4]
-        except: return True
-        if cmd == settings.conf['key_detach']:
-            if frontend.status() == "NOT_SUSPENDED":
-                detach()
-                settings.frontend_active = 0
-            else:
-                resume(frontend.status())
-        elif cmd == settings.conf['key_xbmc'] and settings.external_prog == 0:
-                settings.external_prog = 1
-                gobject.timeout_add(50, start_xbmc)
-                return True
-
-        elif cmd == settings.conf['key_power']:
-            if frontend.status() == "NOT_SUSPENDED":
-                settings.timer = gobject.timeout_add(15000,soft_detach)
-                settings.frontend_active = 0
-            else:
-                send_shutdown()
+    @dbus.service.method('de.yavdr.frontend', in_signature="s", out_signature='b')
+    def updateDisplay(self, display=None):
+        if display is not None:
+            self.settings.env["DISPLAY"] = display
+            return True
         else:
-            if settings.frontend_active == 0 and settings.external_prog == 0:
-                resume(frontend.status())
-                settings.frontend_active = 1
-            else:
-                pass
-    return True
+            return False
 
-def start_xbmc():
-    if settings.frontend_active == 1:
-        detach()
-        reattach = 1
-    else:
-        reattach = 0
-    print settings.conf['user']
-    try: subprocess.check_call(['sudo','-u',settings.conf['user'],'/usr/lib/xbmc/xbmc.bin','--standalone','--lircdev','/var/run/lirc/lircd'])
-    except: pass
-    if reattach == 1:
-        resume(frontend.status())
-        settings.frontend_active = 1
-    else:
-        #settings.external_prog = 0
-        settings.frontend_active = 0
-    gobject.timeout_add(500,reset_external_prog)
-    return False
-
-def reset_external_prog():
-    settings.external_prog = 0
-    return False
-
-def startup():
-    # check if vdr was started for a timer or an acpi_wakeup event, if not attach frontend
-    if settings.manualstart == True and settings.acpi_wakeup != True and settings.conf['start_always_detached'] == '0':
-        resume(frontend.status())
-    else:
-        # set background visible when frontend is detached
-        subprocess.call(["/usr/bin/feh","--bg-fill",settings.conf['logo_detached']], env=settings.env)
-
-        graphtft_switch()
-
-        if settings.manualstart == False:
-            settings.timer = gobject.timeout_add(300000, send_shutdown)
-        elif settings.acpi_wakeup == True:
-            if setup.vdrsetupget('MinUserInactivity')[0] != 0:
-                interval, default, answer = setup.vdrsetupget("MinEventTimeout")
-                interval_ms = interval  * 60000 # * 60s * 1000ms
-                settings.timer = gobject.timeout_add(interval_ms, setUserInactive)
-        else:
-            interval, default, answer = setup.vdrsetupget("MinEventTimeout")
-            interval_ms = interval  * 60000 # * 60s * 1000ms
-            settings.timer = gobject.timeout_add(interval_ms, setUserInactive)
-        remote.disable()
+    @dbus.service.method('de.yavdr.frontend', out_signature='s')
+    def checkDisplay(self):
+        return self.settings.env["DISPLAY"]
 
 class lircConnection():
-    def __init__(self):
-        self.socket_path = "/var/run/lirc/lircd"
-
+    def __init__(self,socket_path="/var/run/lirc/lircd"):
+        self.socket_path = socket_path
+        self.try_connection()
+        self.callback = None
+        
     def connect_eventlircd(self):
-        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        sock.connect(self.socket_path)
-        gobject.io_add_watch(sock, gobject.IO_IN, handler)
+        self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self.sock.connect(self.socket_path)
+        self.callback = gobject.io_add_watch(self.sock, gobject.IO_IN, self.handler)
 
     def try_connection(self):
         try:
             self.connect_eventlircd()
+            syslog.syslog(u"conntected to Lirc-Socket on %s"%(self.socket_path))
             return False
         except:
             gobject.timeout_add(1000, self.try_connection)
+            try:
+                if self.callback:
+                    gobject.source_remove(self.callback)
+            except:
+                pass
             syslog.syslog("Error: vdr-frontend could not connect to eventlircd socket")
+            return False
+            
+    def handler(self, sock, *args):
+        '''callback function for activity on eventlircd socket'''
+        try:
+            buf = sock.recv(1024)
+            if not buf:
+                self.sock.close()
+                try:
+                    if self.callback:
+                        gobject.source_remove(self.callback)
+                except:
+                    pass
+                syslog.syslog("Error reading from lircd socket")
+                self.try_connection()
+                return False
+        except:
+            sock.close()
+            try:
+                gobject.source_remove(self.callback)
+            except: pass
+            syslog.syslog('retry lirc connection')
+            self.try_connection()
             return True
-
-def connect_eventlircd():
-    socket_path = "/var/run/lirc/lircd"
-    sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-    sock.connect(socket_path)
-    gobject.io_add_watch(sock, gobject.IO_IN, handler)
-
-def try_connection():
-    try:
-        connect_eventlircd()
-        return False
-    except:
-        gobject.timeout_add(1000, try_connection)
-        syslog.syslog("Error: vdr-frontend could not connect to eventlircd socket")
+        lines = string.split(buf, "\n")
+        for line in lines[:-1]:
+            try: 
+                code,count,cmd,device = string.split(line, " ")[:4]
+                if count != "0": 
+                    #syslog.syslog('repeated keypress')
+                    return True
+                else:
+                    try:
+                        gobject.source_remove(settings.timer)
+                    except: pass
+            except: 
+                syslog.syslog(line)
+                return True
+            if cmd == settings.conf['key_detach']:#"KEY_PROG1":
+                if frontend.status() == "NOT_SUSPENDED":
+                    detach()
+                    settings.frontend_active = 0
+                else:
+                    resume(frontend.status())
+            elif cmd == settings.conf['key_power']:#"KEY_POWER2":
+                if frontend.status() == "NOT_SUSPENDED":
+                    settings.timer = gobject.timeout_add(15000,soft_detach)
+                    settings.frontend_active = 0
+                else:
+                    send_shutdown()
+            else:
+                if settings.frontend_active == 0:
+                    resume(frontend.status())
+                    settings.frontend_active = 1
+                else:
+                    pass
         return True
 
+def onStart(*args, **kwargs):
+    print "vdr started"
+    main()
 
-if __name__ == '__main__':
-    syslog.openlog(ident="vdr-frontend",logoption=syslog.LOG_PID)
+def onStop(*args, **kwargs):
+    print "vdr stopped"
+
+def main():
+    
+
     # Initialise dbus-control classes
     frontend = dbusSofthddeviceFrontend()
     remote = dbusRemote()
     shutdown = dbusShutdown()
     setup = dbusSetup()
-    # initzialise settings (and environment variables)
+    timer = dbusTimer()
     settings = Settings()
-    # Connect to lirc socket
-    try_connection()
-    startup()
 
-    dbusservice = dbusService()
+    # attach frontend if vdr has not been started for a timer or an acpi
+    # wakeup event
+    if settings.manualstart == True and settings.acpi_wakeup != True and settings.conf['start_always_detached'] == '0':
+        resume(frontend.status())
+    else:
+        # set background visible when frontend is detached
+        subprocess.call(["/usr/bin/feh","--bg-fill",settings.conf['logo_detached']], env=settings.env)
+        # change graphtftng view if the plugin has been loaded
+        graphtftng_switch()
+        # check for timer within the next 6 minutes
+        if settings.manualstart == False and timer.wakeup_for_Timer():
+            settings.timer = gobject.timeout_add(300000, send_shutdown)
+        # no timer, just an acpi-wakeup event
+        elif settings.acpi_wakeup == True and setup.vdrsetupget("MinUserInactivity")[0] > 0:
+            interval, default, answer = setup.vdrsetupget("MinEventTimeout")
+            interval_ms = interval  * 60000 # * 60s * 1000ms
+            settings.timer = gobject.timeout_add(interval_ms, setUserInactive)
+        # neither woken for a timer nor for a acpi event
+        elif setup.vdrsetupget("MinUserInactivity")[0] > 0:
+            interval, default, answer = setup.vdrsetupget("MinEventTimeout")
+            interval_ms = interval  * 60000 # * 60s * 1000ms
+            settings.timer = gobject.timeout_add(interval_ms, setUserInactive)
+        remote.disable()
+
+    def connect_eventlircd():
+        socket_path = "/var/run/lirc/lircd"
+        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        sock.connect(socket_path)
+        gobject.io_add_watch(sock, gobject.IO_IN, handler)
+
+    def try_connection():
+      try:
+          connect_eventlircd()
+      except:
+        syslog.syslog("Error: vdr-frontend could not connect to eventlircd socket")
+
+    lircconnection = lircConnection()
+    dbusservice = dbusService(settings)
+
+
+if __name__ == '__main__':
+    syslog.openlog(ident="vdr-frontend",logoption=syslog.LOG_PID)
+    dbus2vdr = DBus2VDR(dbus.SystemBus(), instance=0, watchdog=True)
+    dbus2vdr.onSignal("Ready", onStart)
+    dbus2vdr.onSignal("Stop", onStop)
+    if dbus2vdr.checkVDRstatus():
+        logging.info("vdr is already ready")
+        onStart()
     loop = gobject.MainLoop()
     loop.run()
+
