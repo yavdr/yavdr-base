@@ -15,7 +15,6 @@ from pyudev.glib import GUDevMonitorObserver
 import dbus
 import dbus.service
 from dbus.mainloop.glib import DBusGMainLoop
-from dbus2vdr import DBus2VDR
 
 DBusGMainLoop(set_as_default=True)
 bus = dbus.SystemBus()
@@ -428,16 +427,8 @@ class lircConnection():
                     pass
         return True
 
-def onStart(*args, **kwargs):
-    print "vdr started"
-    main()
-
-def onStop(*args, **kwargs):
-    print "vdr stopped"
-
-def main():
-    
-
+if __name__ == '__main__':
+    syslog.openlog(ident="vdr-frontend",logoption=syslog.LOG_PID)
     # Initialise dbus-control classes
     frontend = dbusSofthddeviceFrontend()
     remote = dbusRemote()
@@ -484,16 +475,6 @@ def main():
 
     lircconnection = lircConnection()
     dbusservice = dbusService(settings)
-
-
-if __name__ == '__main__':
-    syslog.openlog(ident="vdr-frontend",logoption=syslog.LOG_PID)
-    dbus2vdr = DBus2VDR(dbus.SystemBus(), instance=0, watchdog=True)
-    dbus2vdr.onSignal("Ready", onStart)
-    dbus2vdr.onSignal("Stop", onStop)
-    if dbus2vdr.checkVDRstatus():
-        logging.info("vdr is already ready")
-        onStart()
     loop = gobject.MainLoop()
     loop.run()
 
