@@ -43,13 +43,17 @@ class Main:
     def sigint(self, signal, *args, **kwargs):
         logging.info("got %s" % signal)
         self.onStop()
-        self.loop.quit()
         sys.exit()
 
     def onStart(self, *args, **kwargs):
         logging.info("VDR Ready")
         self.vdrStatus == 1
         self.proc = subprocess.Popen("exec " + self.cmd, shell=True, env=self.environ)
+        status = self.proc.wait()
+        print("child process ended with exit code:", status)
+        if self.dbus2vdr.checkVDRstatus():
+            print("restarting process")
+            self.onStart()
 
     def onStop(self, *args, **kwargs):
         logging.info("VDR stopped")
