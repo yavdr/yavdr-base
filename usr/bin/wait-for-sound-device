@@ -6,6 +6,8 @@ import os
 import pyudev
 from pyudev.glib import GUDevMonitorObserver
 import sys
+from pyalsa import alsacard
+import re
 
 class Config:
     def __init__(self):
@@ -14,6 +16,9 @@ class Config:
         argparser.add_argument('-c', '--cardnumber', metavar='CARDNUMBER',
                                dest='cards', action='append', default=None, type=int,
                                help='sound device card number, e.g. -c 0')
+        argparser.add_argument('-n', '--cardnames', metavar='CARDNAME',
+                               dest='names', action='append', default=None,
+                               help='sound device name, e.g. -n NVidia')
         argparser.add_argument('-t', '--timeout', metavar='TIMEOUT',
                                dest='timeout', default=30, type=int,
                                help='wait x seconds before giving up (default: 30 s)')
@@ -25,11 +30,22 @@ class DetectSound:
         self.config = Config()
         self.timeout = gobject.timeout_add((1000*self.config.args['timeout']), self.on_timeout)
         self.wanted_cards = None
+        self.lookup_names = False
+
         wanted_card_numbers = self.config.args['cards']
         if wanted_card_numbers:
             self.wanted_cards = []
             for card in wanted_card_numbers:
                 self.wanted_cards.append("card%d" % card)
+
+        wanted_card_names = self.config.args['names']
+        if wanted_card_names:
+            self.lookup_names = True
+            if self.wanted_cards is None:
+               self.wanted_cards = []
+            for name in wanted_card_names:
+                self.wanted_cards.append(name)
+
         if self.wanted_cards:
             context = pyudev.Context()
             print "waiting for %s" % self.wanted_cards
@@ -43,9 +59,24 @@ class DetectSound:
                 if device.sys_name in self.wanted_cards:
                     print "found %s" % device.sys_name
                     self.wanted_cards.pop(self.wanted_cards.index(device.sys_name))
-                    if len(self.wanted_cards) == 0:
-                        sys.exit(0)
+                if self.lookup_names:
+                   (found, alsa_name) = self.alsa_match_name(device.sys_name, self.wanted_cards)
+                   if found:
+                      print "found %s" % alsa_name
+                      self.wanted_cards.pop(self.wanted_cards.index(alsa_name))
+                if len(self.wanted_cards) == 0:
+                    sys.exit(0)
         else: sys.exit(0)
+
+    def alsa_match_name(self, udev_sys_name, alsa_names):
+       m = re.search('^card([0-9]+)$', udev_sys_name)
+       if m.group is None:
+          return (False, "")
+       index = int(m.group(1))
+       for name in alsa_names:
+          if alsacard.card_get_index(name) == index:
+             return (True, name)
+       return (False, "")
 
     def udev_event(self, observer, action, device):
        if ((action in ['add', 'change'])
@@ -54,6 +85,11 @@ class DetectSound:
            and device['SOUND_INITIALIZED'] == '1'):
            print "got a initialized %s" % device.sys_name
            self.wanted_cards.remove(device.sys_name)
+           if self.lookup_names:
+              (found, alsa_name) = self.alsa_match_name(device.sys_name, self.wanted_cards)
+              if found:
+                 print "got a initialized %s" % alsa_name
+                 self.wanted_cards.remopve(alsa_name)
            if len(self.wanted_cards) == 0:
                sys.exit(0)
            else:
