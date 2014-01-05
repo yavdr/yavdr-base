@@ -7,28 +7,55 @@
 # $1 <command>  after
 # $2 <path to .rec> /video0/hitec/Doku/%Die_stille_Revolution_der_Mechatronik/2004-04-23.15\:25.50.99.rec
 #
-case $1 in 
-	after)
-		echo "Copy EPG-Image to $2"
-		;;
-	*)
-		echo "Script needs two parameters. See example inside the script."
-		exit 0
-		;;
-esac
+
+COMMAND=$1
+RECPATH=$2
+CUTPATH=$3
+
+# epg definitions
+EPGIMAGESPATH="/var/cache/vdr/epgimages"
+EPGIMAGESFORMAT="jpg"
 
 # eventid for recording
-ELINE=`grep "^E " $2/info*`
+geteventid() {
+ELINE=`grep "^E " $RECPATH/info*`
 ELINE=${ELINE//E }
 EVENTID=${ELINE// *}
+}
 
-EPGIMAGES=/var/cache/vdr/epgimages/
-
-if [ ! -f $2/Cover-Enigma.jpg ]; then
-   if [ -f $EPGIMAGES/$EVENTID.jpg ]; then # typo $EPGIMGAGES
-      cp $EPGIMAGES/$EVENTID.jpg $2 # typo $EPGIMGAGES
-      cd $2 # Wegen R50correct_videodirs   	
-      ln -s $EVENTID.jpg Cover-Enigma.jpg
-   fi
+copyepgimages() {
+if [ ! -f $RECPATH/Cover-Enigma.jpg ]; then
+	geteventid
+	if [ -f $EPGIMAGESPATH/"$EVENTID"_0.$EPGIMAGESFORMAT ]; then
+		SEARCH=`find $1 -name ""$EVENTID"_*.$EPGIMAGESFORMAT"`;
+		for i in $SEARCH ; do
+			logger -t epgimage "Copy EPG Images for event ID $EVENTID: $i to $RECPATH"
+			cp $i $RECPATH;
+		done
+		cd $RECPATH
+		ln -s "$EVENTID"_0.jpg Cover-Enigma.jpg
+	fi
 fi
+}
+
+case $1 in
+	before)
+		# do here whatever you would like to do right BEFORE
+		# the recording $2 STARTS
+		;;
+	after)
+		# do here whatever you would like to do right AFTER
+		# the recording $2 ENDED
+		copyepgimages $EPGIMAGESPATH
+		;;
+	edited)
+                # do here whatever you would like to do right AFTER
+                # the recording $2 has been EDITED
+                copyepgimages $CUTPATH 
+		;;
+        *)
+                echo "Script needs two parameters. See example inside the script."
+                exit 0
+                ;;
+esac
 
