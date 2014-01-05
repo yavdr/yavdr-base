@@ -8,7 +8,6 @@
 # $2 <path to .rec> /video0/hitec/Doku/%Die_stille_Revolution_der_Mechatronik/2004-04-23.15\:25.50.99.rec
 #
 
-COMMAND=$1
 RECPATH=$2
 CUTPATH=$3
 
