@@ -31,7 +31,7 @@ if [ ! -f $RECPATH/$COVER.$EPGIMAGESFORMAT ]; then
 	if [ -f $1/"$EVENTID"_0.$EPGIMAGESFORMAT ]; then
 		SEARCH=`find $1 -name ""$EVENTID"_*.$EPGIMAGESFORMAT" | sort`;
 		for i in $SEARCH ; do
-			logger -t epgimage "Copy EPG Images for event ID $EVENTID: $i to $RECPATH"
+			logger -t epgimage "Copy EPG Image for event ID $EVENTID: $i to $RECPATH"
 			cp $i $RECPATH;
 		done
 		cd $RECPATH
