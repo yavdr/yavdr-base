@@ -85,7 +85,7 @@ class dbusTimer():
 def get_dbusPlugins():
     '''wrapper for dbus plugin list'''
     dbusplugins = bus.get_object("de.tvdr.vdr","/Plugins")
-    raw = dbusplugins.List(dbus_interface="de.tvdr.vdr.plugin")
+    raw = dbusplugins.List(dbus_interface="de.tvdr.vdr.pluginmanager")
     plugins = {}
     if len(raw) > 0:
         for name, version in raw:
