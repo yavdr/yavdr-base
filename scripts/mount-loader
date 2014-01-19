@@ -20,7 +20,12 @@ function loginfo()
 loginfo "starting mount-loader"
 
 # load default values and overrides from /etc/default/vdr 
+if [ -e /usr/lib/vdr/config-loader ]; then
 . /usr/lib/vdr/config-loader
+elif [ -e /usr/lib/vdr/config-loader.sh ]; then
+. /usr/lib/vdr/config-loader.sh
+fi
+
 
 loginfo "VIDEO_DIR=$VIDEO_DIR"
 

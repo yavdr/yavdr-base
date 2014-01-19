@@ -1,6 +1,11 @@
 #!/bin/bash
 
+if [ -e /usr/lib/vdr/config-loader ]; then
 . /usr/lib/vdr/config-loader
+elif [ -e /usr/lib/vdr/config-loader.sh ]; then
+. /usr/lib/vdr/config-loader.sh
+fi
+
 
 DIR="$2"
 NAME=$(basename "$DIR")

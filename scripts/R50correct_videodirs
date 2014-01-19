@@ -58,6 +58,8 @@ esac
 # YAVDR (DEBIAN?) spezifisch sonst auskommentieren
 if [ -e /usr/lib/vdr/config-loader ]; then
 . /usr/lib/vdr/config-loader
+elif [ -e /usr/lib/vdr/config-loader.sh ]; then
+. /usr/lib/vdr/config-loader.sh
 else
     exit 1
 fi
