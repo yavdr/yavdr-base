@@ -208,7 +208,11 @@ class Settings():
             if i in os.environ:
                 self.conf[i] = os.environ[i]
         self.check_graphtftng()
-        self.get_event_devices()
+        try:
+            self.get_event_devices()
+        except:
+            syslog.syslog("Error: insufficient permissions for accessing input devices")
+            pass
 
     def check_graphtftng(self):
         plugins = get_dbusPlugins()
