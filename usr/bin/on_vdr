@@ -18,6 +18,9 @@ class Config:
         argparser.add_argument('-c', '--command', metavar='COMMAND',
                                dest='command', default=None,
                                help='command to run if vdr is running and ready')
+        argparser.add_argument('-o', '--one-shot', action="store_true",
+                               dest='oneshot', default=False,
+                               help='run once if vdr detected')
         self.args = vars(argparser.parse_args())
 
 class Main:
@@ -56,6 +59,8 @@ class Main:
         try:
             print(args, kwargs)
             print("child process ended")
+            if self.oneshot:
+                return
             if self.dbus2vdr.checkVDRstatus():
                 print("restarting process")
                 self.onStart()
