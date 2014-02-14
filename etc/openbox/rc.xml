@@ -750,6 +750,14 @@
     <skip_pager>yes</skip_pager>
     <skip_taskbar>yes</skip_taskbar>
   </application>
+  
+  <application name="graphtft-fe*">
+    <decor>no</decor>
+    <layer>below</layer>
+    <maximized>true</maximized>
+    <skip_pager>yes</skip_pager>
+    <skip_taskbar>yes</skip_taskbar>
+ </application>
 </applications>
 
 </openbox_config>
