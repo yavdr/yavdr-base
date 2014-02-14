@@ -25,7 +25,8 @@ EVENTID=${ELINE// *}
 }
 
 copyepgimages() {
-if [ ! -f $RECPATH/$COVER.$EPGIMAGESFORMAT ]; then
+while [ ! -e $RECPATH/info* ]; do sleep 2; done
+#if [ ! -f $RECPATH/$COVER.$EPGIMAGESFORMAT ]; then
 	geteventid
 	if [ -f $1/"$EVENTID"_0.$EPGIMAGESFORMAT ]; then
 		SEARCH=`find $1 -name ""$EVENTID"_*.$EPGIMAGESFORMAT" | sort`;
@@ -36,18 +37,19 @@ if [ ! -f $RECPATH/$COVER.$EPGIMAGESFORMAT ]; then
 		#cd $RECPATH
 		#ln -s "$EVENTID"_0.$EPGIMAGESFORMAT $COVER.$EPGIMAGESFORMAT
 	fi
-fi
+#fi
 }
 
 case $1 in
 	before)
 		# do here whatever you would like to do right BEFORE
 		# the recording $2 STARTS
+		copyepgimages $EPGIMAGESPATH
 		;;
 	after)
 		# do here whatever you would like to do right AFTER
 		# the recording $2 ENDED
-		copyepgimages $EPGIMAGESPATH
+		#copyepgimages $EPGIMAGESPATH
 		;;
 	edited)
                 # do here whatever you would like to do right AFTER
@@ -59,3 +61,4 @@ case $1 in
                 exit 0
                 ;;
 esac
+
