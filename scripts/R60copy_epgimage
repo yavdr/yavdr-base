@@ -25,7 +25,7 @@ EVENTID=${ELINE// *}
 }
 
 copyepgimages() {
-while [ ! -e $RECPATH/info* ]; do sleep 2; done
+while [ ! -f $RECPATH/info ]; do sleep 2; done
 #if [ ! -f $RECPATH/$COVER.$EPGIMAGESFORMAT ]; then
 	geteventid
 	if [ -f $1/"$EVENTID"_0.$EPGIMAGESFORMAT ]; then
