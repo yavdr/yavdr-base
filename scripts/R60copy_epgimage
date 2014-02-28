@@ -48,6 +48,11 @@ case $1 in
 		# the recording $2 STARTS
 		copyepgimages $EPGIMAGESPATH
 		;;
+	started)
+		# do here whatever you would like to do right AFTER
+		# the recording $2 STARTED
+		#copyepgimages $EPGIMAGESPATH
+		;;		
 	after)
 		# do here whatever you would like to do right AFTER
 		# the recording $2 ENDED
