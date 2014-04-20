@@ -46,12 +46,11 @@ case $1 in
 	before)
 		# do here whatever you would like to do right BEFORE
 		# the recording $2 STARTS
-		copyepgimages $EPGIMAGESPATH
 		;;
 	after)
 		# do here whatever you would like to do right AFTER
 		# the recording $2 ENDED
-		#copyepgimages $EPGIMAGESPATH
+		copyepgimages $EPGIMAGESPATH
 		;;
 	edited)
                 # do here whatever you would like to do right AFTER
