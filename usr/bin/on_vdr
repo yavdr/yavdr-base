@@ -59,12 +59,13 @@ class Main:
         try:
             print(args, kwargs)
             print("child process ended")
-            if self.oneshot:
+            if self.config.args['oneshot']:
                 return
             if self.dbus2vdr.checkVDRstatus():
                 print("restarting process")
                 self.onStart()
-        except: pass
+        except Exception as e:
+            print(e)
 
     def onStop(self, *args, **kwargs):
         logging.info("VDR stopped")
