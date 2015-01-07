@@ -758,6 +758,10 @@
     <skip_pager>yes</skip_pager>
     <skip_taskbar>yes</skip_taskbar>
  </application>
+ 
+   <application name="xsnow">
+    <layer>above</layer>
+  </application>
 </applications>
 
 </openbox_config>
