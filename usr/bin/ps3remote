@@ -13,28 +13,28 @@
 import struct
 import os
 import fcntl
-import datetime
 import gobject
-import socket
+import sys
 import uinput
 from optparse import OptionParser
 
 # check if this works on 32-bit systems...
 '''if os.uname()[4] == "i686":
     inputEventFormat = 'iihhi'
-    inputEventSize = 16''' 
+    inputEventSize = 16'''
 ##########################################
 if os.uname()[4] == "x86_64":
     inputEventFormat = 'llHHi'
     inputEventSize = 24
 else:
     sys.exit(1)
-    
+
 events = []
 
 for element in dir(uinput):
-    if element.startswith("KEY_") or element.startswith("BTN_") or element.startswith("REL_"):
-        events.append(eval("uinput.%s"%(element)))
+    if element.startswith(("KEY_", "REL_", "BTN_")):
+        events.append(eval("uinput.%s" % (element)))
+
 
 class devinput():
 
@@ -44,40 +44,43 @@ class devinput():
         self.options = parser.get_opts()
         #self.socketpath = self.options.socket
         self.uinputdev = uinput.Device(events, self.options.name)
-                
-    def eventhandler(self,sock, *args):
+
+    def eventhandler(self, sock, *args):
         event = self.socketpath.read(inputEventSize)
-        (time1, time2, typeev, code, value) = struct.unpack(inputEventFormat, event)
-        if typeev == 0 and code == 0 and value == 0: # sync event
+        (time1, time2, typeev, code, value) = struct.unpack(inputEventFormat,
+                                                            event)
+        if typeev == 0 and code == 0 and value == 0:  # sync event
             pass
         elif value == 0:
-            #print "Release %s"%(datetime.datetime.fromtimestamp(time1)+datetime.timedelta(microseconds=time2))
-            #print "Type:",typeev,"\tCode: " ,code,"\tValue:", value
             gobject.source_remove(self.timer)
-            self.uinputdev.emit((typeev,code), value)
+            self.uinputdev.emit((typeev, code), value)
         else:
-            #print "Tastendruck %s"%(datetime.datetime.fromtimestamp(time1)+datetime.timedelta(microseconds=time2))
-            #print "Type:",typeev,"\tCode: " ,code,"\tValue:", value
-            #print code
-            self.uinputdev.emit((typeev,code), value)
+            self.uinputdev.emit((typeev, code), value)
             if typeev == 1:
-                self.timer = gobject.timeout_add(self.options.repeat, self.repeatkey, code)
+                self.timer = gobject.timeout_add(self.options.repeat,
+                                                 self.repeatkey, code)
         return True
-        
+
     def repeatkey(self, code):
-        self.uinputdev.emit((1,code), 2)
+        self.uinputdev.emit((1, code), 2)
         return True
-        
+
+
 class Options:
     def __init__(self):
         self.parser = OptionParser()
-        self.parser.add_option("-s", "--socket", dest="socket", default=None,
-                  help="choose devinput socket to listen on", metavar="SOCKET")
-        self.parser.add_option("-r", "--repeat", dest="repeat", default=150, type="int",
-                  help="wait -r <milliseconds> before sending repeated keystrokes", metavar="REPEAT")
-        self.parser.add_option("-n", "--name", dest="name", default="Bluetooth Remote",
-                  help="name of uinput device", metavar="NAME")
-             
+        self.parser.add_option(
+            "-s", "--socket", dest="socket", default=None,
+            help="choose devinput socket to listen on", metavar="SOCKET")
+        self.parser.add_option(
+            "-r", "--repeat", dest="repeat", default=150,
+            type="int",
+            help="wait -r <milliseconds> before sending repeated keystrokes",
+            metavar="REPEAT")
+        self.parser.add_option(
+            "-n", "--name", dest="name", default="Bluetooth Remote",
+            help="name of uinput device", metavar="NAME")
+
     def get_opts(self):
         (options, args) = self.parser.parse_args()
         return options
@@ -85,18 +88,17 @@ class Options:
 
 def main():
     devinput2lircd = devinput()
-    socketpath_ = devinput2lircd.options.socket
     try:
         with open(devinput2lircd.options.socket, "rwb") as socketpath:
             devinput2lircd.socketpath = socketpath
-            gobject.io_add_watch(socketpath, gobject.IO_IN, devinput2lircd.eventhandler)  
-            fcntl.ioctl(socketpath.fileno(), 0x40044590, 1) #exclusive access to input device - so keypresses do not disturb other programs
+            gobject.io_add_watch(socketpath, gobject.IO_IN,
+                                 devinput2lircd.eventhandler)
+            # aquire exclusive access to input device
+            fcntl.ioctl(socketpath.fileno(), 0x40044590, 1)
             gobject.MainLoop().run()
     except:
         exit()
 
-    
-       
-        
+
 if __name__ == '__main__':
     main()
