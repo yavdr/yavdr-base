@@ -1,0 +1,4 @@
+#!/bin/bash
+
+sudo /sbin/initctl stop vdr
+sudo /sbin/poweroff
