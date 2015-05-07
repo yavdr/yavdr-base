@@ -50,14 +50,15 @@ class Main:
         self.vdrStatus = 0
         self.proc = None
         self.cmd = self.config.args['command']
+        self.oneshot = self.config.args['oneshot']
+        self.timeout = self.config.args['timeout']
+        self.exit = self.config.args['exit']
         self.environ = os.environ
         signal.signal(signal.SIGTERM, self.sigint)
         signal.signal(signal.SIGINT, self.sigint)
         if self.dbus2vdr.checkVDRstatus():
             logging.info("vdr is already ready")
             self.onStart()
-        self.timeout = self.config.args['timeout']
-        self.exit = self.config.args['exit']
         if self.timeout:
             self.timeout_id = GObject.timeout_add(self.timeout * 1000,
                                                   self.quit_on_timeout)
@@ -88,7 +89,7 @@ class Main:
         try:
             print(args, kwargs)
             print("child process ended")
-            if self.config.args['oneshot']:
+            if self.oneshot:
                 if self.exit:
                     sys.exit()
                 return
