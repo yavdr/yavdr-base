@@ -1,4 +1,6 @@
 #!/usr/bin/python3
+
+
 from gi.repository import GObject
 import dbus
 from dbus.mainloop.glib import DBusGMainLoop
@@ -11,17 +13,29 @@ import subprocess
 import sys
 from dbus2vdr import DBus2VDR
 
+
 class Config:
     def __init__(self):
         argparser = argparse.ArgumentParser(
-                                      description='run a command while vdr is running')
-        argparser.add_argument('-c', '--command', metavar='COMMAND',
-                               dest='command', default=None,
-                               help='command to run if vdr is running and ready')
-        argparser.add_argument('-o', '--one-shot', action="store_true",
-                               dest='oneshot', default=False,
-                               help='run once if vdr detected')
+            description='run a command while vdr is running')
+        argparser.add_argument(
+            '-c', '--command', metavar='COMMAND',
+            dest='command', default=None,
+            help='command to run if vdr is running and ready')
+        argparser.add_argument(
+            '-o', '--one-shot', action="store_true",
+            dest='oneshot', default=False,
+            help='run once everytime vdr is detected')
+        argparser.add_argument(
+            '-t', '--timeout', type=int, dest='timeout',
+            default=None,
+            help="exit after n seconds if vdr is not available")
+        argparser.add_argument(
+            '-e', '--exit', action='store_true',
+            dest=exit, default=False,
+            help='exit after command has been run, needs --one-shot option')
         self.args = vars(argparser.parse_args())
+
 
 class Main:
     def __init__(self):
@@ -42,6 +56,18 @@ class Main:
         if self.dbus2vdr.checkVDRstatus():
             logging.info("vdr is already ready")
             self.onStart()
+        self.timeout = self.config.args['timeout']
+        self.exit = self.config.args['exit']
+        if self.timeout:
+            self.timeout_id = GObject.timeout_add(self.timeout * 1000,
+                                                  self.quit_on_timeout)
+        else:
+            self.timeout_id = None
+
+    def quit_on_timeout(self):
+        sys.exit(
+            "vdr did not show up, quitting after %s seconds" % self.timeout
+        )
 
     def sigint(self, signal, *args, **kwargs):
         logging.info("got %s" % signal)
@@ -49,9 +75,12 @@ class Main:
         sys.exit()
 
     def onStart(self, *args, **kwargs):
+        if self.timeout_id:
+            GObject.source_remove(self.timeout_id)
         logging.info("VDR Ready")
         self.vdrStatus == 1
-        self.proc = subprocess.Popen("exec " + self.cmd, shell=True, env=self.environ)
+        self.proc = subprocess.Popen("exec " + self.cmd,
+                                     shell=True, env=self.environ)
         self.pid = self.proc.pid
         self.child = GObject.child_watch_add(self.pid, self.onExit)
 
@@ -60,6 +89,8 @@ class Main:
             print(args, kwargs)
             print("child process ended")
             if self.config.args['oneshot']:
+                if self.exit:
+                    sys.exit()
                 return
             if self.dbus2vdr.checkVDRstatus():
                 print("restarting process")
