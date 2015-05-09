@@ -32,7 +32,7 @@ class Config:
             help="exit after n seconds if vdr is not available")
         argparser.add_argument(
             '-e', '--exit', action='store_true',
-            dest=exit, default=False,
+            dest='exit', default=False,
             help='exit after command has been run, needs --one-shot option')
         self.args = vars(argparser.parse_args())
 
