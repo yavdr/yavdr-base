@@ -56,14 +56,14 @@ class Main:
         self.environ = os.environ
         signal.signal(signal.SIGTERM, self.sigint)
         signal.signal(signal.SIGINT, self.sigint)
-        if self.dbus2vdr.checkVDRstatus():
-            logging.info("vdr is already ready")
-            self.onStart()
         if self.timeout:
             self.timeout_id = GObject.timeout_add(self.timeout * 1000,
                                                   self.quit_on_timeout)
         else:
             self.timeout_id = None
+        if self.dbus2vdr.checkVDRstatus():
+            logging.info("vdr is already ready")
+            self.onStart()
 
     def quit_on_timeout(self):
         sys.exit(
