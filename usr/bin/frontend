@@ -266,12 +266,6 @@ class Settings():
             return False
         (time1, time2, typeev, code, value) = struct.unpack(self.inputEventFormat, event)
 
-        if typeev == 1 and code == 115: # code 115 = KEY_VOLUMEUP
-           remote.sendkey("Volume+") 
-	if typeev == 1 and code == 114: # code 115 = KEY_VOLUMEDOWN
-           remote.sendkey("Volume-")
-        if typeev == 1 and code == 113 and value == 1: # code 115 = KEY_MUTE
-           remote.sendkey("Mute")
         if typeev == 1 and code == 172 and value == 1: # code 172 = KEY_HOMEPAGE - toggle frontend (attach/detach) 
            if self.frontend_active == 1:
                syslog.syslog("detached frontend")
