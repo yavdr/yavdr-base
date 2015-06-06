@@ -169,7 +169,7 @@ def resume(status):
     elif status == "SUSPEND_DETACHED":
         frontend.attach()
     graphtftng_switch()
-    
+
 
 class Settings():
     ''' read and store configuration, handle input devices using udev'''
@@ -267,12 +267,12 @@ class Settings():
         (time1, time2, typeev, code, value) = struct.unpack(self.inputEventFormat, event)
 
         if typeev == 1 and code == 115: # code 115 = KEY_VOLUMEUP
-           remote.sendkey("Volume+") 
+           remote.sendkey("Volume+")
 	if typeev == 1 and code == 114: # code 115 = KEY_VOLUMEDOWN
            remote.sendkey("Volume-")
         if typeev == 1 and code == 113 and value == 1: # code 115 = KEY_MUTE
            remote.sendkey("Mute")
-        if typeev == 1 and code == 172 and value == 1: # code 172 = KEY_HOMEPAGE - toggle frontend (attach/detach) 
+        if typeev == 1 and code == 172 and value == 1: # code 172 = KEY_HOMEPAGE - toggle frontend (attach/detach)
            if self.frontend_active == 1:
                syslog.syslog("detached frontend")
                detach()
@@ -327,7 +327,7 @@ class dbusService(dbus.service.Object):
     def atta(self):
         resume(frontend.status())
         return True
-        
+
     @dbus.service.method('de.yavdr.frontend',out_signature='b')
     def toggle(self):
         if frontend.status() == "NOT_SUSPENDED":
@@ -364,7 +364,7 @@ class lircConnection():
         self.socket_path = socket_path
         self.try_connection()
         self.callback = None
-        
+
     def connect_eventlircd(self):
         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self.sock.connect(self.socket_path)
@@ -384,7 +384,7 @@ class lircConnection():
                 pass
             syslog.syslog("Error: vdr-frontend could not connect to eventlircd socket")
             return False
-            
+
     def handler(self, sock, *args):
         '''callback function for activity on eventlircd socket'''
         try:
@@ -409,16 +409,16 @@ class lircConnection():
             return True
         lines = string.split(buf, "\n")
         for line in lines[:-1]:
-            try: 
+            try:
                 code,count,cmd,device = string.split(line, " ")[:4]
-                if count != "0": 
+                if count != "0":
                     #syslog.syslog('repeated keypress')
                     return True
                 else:
                     try:
                         gobject.source_remove(settings.timer)
                     except: pass
-            except: 
+            except:
                 syslog.syslog(line)
                 return True
             if cmd == settings.conf['key_detach']:#"KEY_PROG1":
@@ -453,11 +453,14 @@ if __name__ == '__main__':
 
     # attach frontend if vdr has not been started for a timer or an acpi
     # wakeup event
-    if settings.manualstart == True and settings.acpi_wakeup != True and settings.conf['start_always_detached'] == '0':
+    if (settings.manualstart == True and settings.acpi_wakeup != True
+            and settings.conf['start_always_detached'] == '0' ) \
+            or settings.conf['start_always_detached'] == '2':
         resume(frontend.status())
     else:
         # set background visible when frontend is detached
-        subprocess.call(["/usr/bin/feh","--bg-fill",settings.conf['logo_detached']], env=settings.env)
+        subprocess.call(["/usr/bin/feh", "--bg-fill",
+                         settings.conf['logo_detached']], env=settings.env)
         # change graphtftng view if the plugin has been loaded
         graphtftng_switch()
         # check for timer within the next 6 minutes
