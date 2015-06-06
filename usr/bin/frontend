@@ -266,17 +266,17 @@ class Settings():
             return False
         (time1, time2, typeev, code, value) = struct.unpack(self.inputEventFormat, event)
 
-        if typeev == 1 and code == 172 and value == 1: # code 172 = KEY_HOMEPAGE - toggle frontend (attach/detach) 
-           if self.frontend_active == 1:
-               syslog.syslog("detached frontend")
-               detach()
-           elif self.frontend_active == 0:
-               syslog.syslog("attached frontend")
-               resume(frontend.status())
-        if self.frontend_active == 0:
-           if typeev == 1 and code == 28 and self.GetActiveWindowTitle() == 'WM_NAM': # resume frontend on KEY_ENTER if no window has focus
-               syslog.syslog("frontend attached by keyboard activity")
-               resume(frontend.status())
+        #if typeev == 1 and code == 172 and value == 1: # code 172 = KEY_HOMEPAGE - toggle frontend (attach/detach) 
+        #   if self.frontend_active == 1:
+        #       syslog.syslog("detached frontend")
+        #       detach()
+        #   elif self.frontend_active == 0:
+        #       syslog.syslog("attached frontend")
+        #       resume(frontend.status())
+        #if self.frontend_active == 0:
+        #   if typeev == 1 and code == 28 and self.GetActiveWindowTitle() == 'WM_NAM': # resume frontend on KEY_ENTER if no window has focus
+        #       syslog.syslog("frontend attached by keyboard activity")
+        #       resume(frontend.status())
         return True
 
 
