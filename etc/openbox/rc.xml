@@ -258,6 +258,22 @@
       <command>kfmclient openProfile filemanagement</command>
     </action>
   </keybind>
+  
+  <keybind key="W-a">
+    <action name="Execute">
+      <command>frontend-dbus-send /frontend atta</command>
+    </action>
+  </keybind>
+  <keybind key="W-s">
+    <action name="Execute">
+      <command>frontend-dbus-send /frontend deta</command>
+    </action>
+  </keybind>
+  <keybind key="XF86HomePage">
+    <action name="Execute">
+      <command>frontend-dbus-send /frontend toggle</command>
+    </action>
+  </keybind>
 </keyboard>
 
 <mouse>
