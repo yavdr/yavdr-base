@@ -245,7 +245,7 @@ class Settings():
                 self.devices[device['DEVNAME']] = gobject.io_add_watch(self.paths[device['DEVNAME']], gobject.IO_IN, self.evthandler)
         elif action == "remove" and 'DEVNAME' in device:
             try:
-	            self.paths[device['DEVNAME']].close()
+                self.paths[device['DEVNAME']].close()
             except:
                 pass
             try:
@@ -266,19 +266,6 @@ class Settings():
             return False
         (time1, time2, typeev, code, value) = struct.unpack(self.inputEventFormat, event)
 
-        if typeev == 1 and code == 115: # code 115 = KEY_VOLUMEUP
-           remote.sendkey("Volume+")
-	if typeev == 1 and code == 114: # code 115 = KEY_VOLUMEDOWN
-           remote.sendkey("Volume-")
-        if typeev == 1 and code == 113 and value == 1: # code 115 = KEY_MUTE
-           remote.sendkey("Mute")
-        if typeev == 1 and code == 172 and value == 1: # code 172 = KEY_HOMEPAGE - toggle frontend (attach/detach)
-           if self.frontend_active == 1:
-               syslog.syslog("detached frontend")
-               detach()
-           elif self.frontend_active == 0:
-               syslog.syslog("attached frontend")
-               resume(frontend.status())
         if self.frontend_active == 0:
            if typeev == 1 and code == 28 and self.GetActiveWindowTitle() == 'WM_NAM': # resume frontend on KEY_ENTER if no window has focus
                syslog.syslog("frontend attached by keyboard activity")
