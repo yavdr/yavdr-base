@@ -7,11 +7,9 @@ import xml.etree.ElementTree as ET
 guisettings = os.getenv("GUISETTINGS", 
                         default="/var/lib/vdr/.kodi/userdata/guisettings.xml")
 
-def read_guisettings():
-    return ET.parse(guisettings)
 
 def change_guisettings():
-    tree = read_guisettings()
+    tree = ET.parse(guisettings)
     root = tree.getroot()
     root.find('videoscreen/monitor').text = get_output_names()[0]
     tree.write(guisettings)
