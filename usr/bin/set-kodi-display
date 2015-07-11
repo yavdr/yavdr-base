@@ -24,5 +24,4 @@ def get_output_names():
     return [l.split()[0] for l in output if " connected " in l]
 
 if __name__ == '__main__':
-    print(get_output_names()[0])
     change_guisettings()
