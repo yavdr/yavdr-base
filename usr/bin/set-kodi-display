@@ -4,7 +4,7 @@ import os
 import subprocess
 import xml.etree.ElementTree as ET
 
-guisettings = '/var/lib/vdr/.kodi/userdata/guisettings.xml'
+guisettings = os.environ['GUISETTINGS']
 
 def read_guisettings():
     return ET.parse(guisettings)
