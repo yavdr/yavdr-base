@@ -4,13 +4,12 @@ import os
 import subprocess
 import xml.etree.ElementTree as ET
 
-guisettings = os.environ['GUISETTINGS']
+guisettings = os.getenv("GUISETTINGS", 
+                        default="/var/lib/vdr/.kodi/userdata/guisettings.xml")
 
-def read_guisettings():
-    return ET.parse(guisettings)
 
 def change_guisettings():
-    tree = read_guisettings()
+    tree = ET.parse(guisettings)
     root = tree.getroot()
     root.find('videoscreen/monitor').text = get_output_names()[0]
     tree.write(guisettings)
@@ -25,5 +24,4 @@ def get_output_names():
     return [l.split()[0] for l in output if " connected " in l]
 
 if __name__ == '__main__':
-    print(get_output_names()[0])
     change_guisettings()
