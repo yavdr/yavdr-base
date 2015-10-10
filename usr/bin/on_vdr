@@ -1,0 +1,118 @@
+#!/usr/bin/python3
+
+
+from gi.repository import GObject
+import dbus
+from dbus.mainloop.glib import DBusGMainLoop
+dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
+import logging
+import argparse
+import os
+import signal
+import subprocess
+import sys
+from dbus2vdr import DBus2VDR
+
+
+class Config:
+    def __init__(self):
+        argparser = argparse.ArgumentParser(
+            description='run a command while vdr is running')
+        argparser.add_argument(
+            '-c', '--command', metavar='COMMAND',
+            dest='command', default=None,
+            help='command to run if vdr is running and ready')
+        argparser.add_argument(
+            '-o', '--one-shot', action="store_true",
+            dest='oneshot', default=False,
+            help='run once everytime vdr is detected')
+        argparser.add_argument(
+            '-t', '--timeout', type=int, dest='timeout',
+            default=None,
+            help="exit after n seconds if vdr is not available")
+        argparser.add_argument(
+            '-e', '--exit', action='store_true',
+            dest='exit', default=False,
+            help='exit after command has been run, needs --one-shot option')
+        self.args = vars(argparser.parse_args())
+
+
+class Main:
+    def __init__(self):
+        self.config = Config()
+        self.bus = dbus.SystemBus()
+        # track vdr status changes
+        self.dbus2vdr = DBus2VDR(dbus.SystemBus(), instance=0, watchdog=True)
+        # bind function to Signal "Ready"
+        self.dbus2vdr.onSignal("Ready", self.onStart)
+        # bind function to Signal "Stop"
+        self.dbus2vdr.onSignal("Stop", self.onStop)
+        self.vdrStatus = 0
+        self.proc = None
+        self.cmd = self.config.args['command']
+        self.oneshot = self.config.args['oneshot']
+        self.timeout = self.config.args['timeout']
+        self.exit = self.config.args['exit']
+        self.environ = os.environ
+        signal.signal(signal.SIGTERM, self.sigint)
+        signal.signal(signal.SIGINT, self.sigint)
+        if self.timeout:
+            self.timeout_id = GObject.timeout_add(self.timeout * 1000,
+                                                  self.quit_on_timeout)
+        else:
+            self.timeout_id = None
+        if self.dbus2vdr.checkVDRstatus():
+            logging.info("vdr is already ready")
+            self.onStart()
+
+    def quit_on_timeout(self):
+        sys.exit(
+            "vdr did not show up, quitting after %s seconds" % self.timeout
+        )
+
+    def sigint(self, signal, *args, **kwargs):
+        logging.info("got %s" % signal)
+        self.onStop()
+        sys.exit()
+
+    def onStart(self, *args, **kwargs):
+        if self.timeout_id:
+            GObject.source_remove(self.timeout_id)
+        logging.info("VDR Ready")
+        self.vdrStatus == 1
+        self.proc = subprocess.Popen("exec " + self.cmd,
+                                     shell=True, env=self.environ)
+        self.pid = self.proc.pid
+        self.child = GObject.child_watch_add(self.pid, self.onExit)
+
+    def onExit(self, *args, **kwargs):
+        try:
+            print(args, kwargs)
+            print("child process ended")
+            if self.oneshot:
+                if self.exit:
+                    sys.exit()
+                return
+            if self.dbus2vdr.checkVDRstatus():
+                print("restarting process")
+                self.onStart()
+        except Exception as e:
+            print(e)
+
+    def onStop(self, *args, **kwargs):
+        logging.info("VDR stopped")
+        try:
+            self.proc.kill()
+        except Exception as e:
+            logging.error("could not stop %s" % self.cmd)
+            logging.error(e)
+        if self.proc:
+            self.proc.wait()
+        self.vdrStatus == 0
+
+if __name__ == '__main__':
+    DBusGMainLoop(set_as_default=True)
+    global main
+    main = Main()
+    loop = GObject.MainLoop()
+    loop.run()
