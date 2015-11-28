@@ -80,7 +80,8 @@ class dbusTimer():
         status,tid,rel,startt,stopt,event = self.dbustimer.Next(dbus_interface=self.interface)
         if status == 250 and (rel <= (6 * 60)):
             return True
-        else:                                                                                                        return False
+        else:
+            return False
 
 def get_dbusPlugins():
     '''wrapper for dbus plugin list'''
