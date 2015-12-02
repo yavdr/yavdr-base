@@ -38,9 +38,10 @@ class DetectSound:
         self.wanted_cards = None
         self.lookup_names = False
 
-        wanted_card_numbers = self.config.args['cards']
-        self.wanted_cards = ["card%d" % card for card
-                             in wanted_card_numbers if wanted_card_numbers]
+        if self.config.args['cards']:
+            wanted_card_numbers = self.config.args['cards']
+            self.wanted_cards = ["card%d" % card for card
+                                 in wanted_card_numbers if wanted_card_numbers]
 
         wanted_card_names = self.config.args['names']
         if wanted_card_names:
