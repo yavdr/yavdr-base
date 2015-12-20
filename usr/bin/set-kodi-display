@@ -1,20 +1,22 @@
 #!/usr/bin/env python3
 
 import os
+import sys
 import subprocess
 import xml.etree.ElementTree as ET
 
-guisettings = os.getenv("GUISETTINGS", 
-                        default="/var/lib/vdr/.kodi/userdata/guisettings.xml")
 
+guisettings = '/var/lib/vdr/.kodi/userdata/guisettings.xml'
+cache_dir = '/var/lib/vdr/.kodi/.display_cache'
+videoscreen_template = """<settings>
+  <videoscreen>
+    <monitor>{}</monitor>
+  </videoscreen>
+</settings>"""
 
-def change_guisettings():
-    tree = ET.parse(guisettings)
-    root = tree.getroot()
-    root.find('videoscreen/monitor').text = get_output_names()[0]
-    tree.write(guisettings)
 
 def get_output_names():
+    """get display name from xrandr for DISPLAY environment variable"""
     output = [
         l for l in subprocess.check_output(
             ["xrandr"],
@@ -23,5 +25,60 @@ def get_output_names():
     ]
     return [l.split()[0] for l in output if " connected " in l]
 
+
+def parse_template(template_path, template, output=""):
+    """read videoscreen settings from backup or create a stub file"""
+    try:
+        xml_tree = ET.parse(template_path)
+    except FileNotFoundError:
+        print("{} not found, creating stub file".format(template_path))
+        xml_template = ET.fromstring(template.format(output))
+        xml_tree = ET.ElementTree(xml_template)
+    finally:
+        xml_tree.write(template_path)
+    return xml_tree
+
+
+def backup_videoscreen():
+    """parse guisettings.xml for display name an backup videoscreen data"""
+    tree = parse_template(guisettings, videoscreen_template, "Default")
+    root = tree.getroot()
+    videoscreen = root.find('videoscreen')
+    output = videoscreen.find('monitor').text
+    xml_path = os.path.join(cache_dir, '{}-videodevice.xml'.format(output))
+    base_tree = ET.fromstring('<settings></settings>')
+    xml_tree = ET.ElementTree(base_tree)
+    backup_root = xml_tree.getroot()
+    backup_root.insert(0, videoscreen)
+    xml_tree.write(xml_path)
+    print("written backup for {} to {}".format(output, xml_path))
+
+
+def change_videoscreen(output, new_videoscreen):
+    """change videoscreen node to content of backup file"""
+    tree = parse_template(guisettings, videoscreen_template, output)
+    root = tree.getroot()
+    videoscreen = root.find('videoscreen')
+    root.insert(0, new_videoscreen)
+    root.remove(videoscreen)
+    tree.write(guisettings)
+    return tree
+
 if __name__ == '__main__':
-    change_guisettings()
+    output = get_output_names()[0]
+    if not output:
+        sys.exit("Error: no screen name found")
+    try:
+        os.makedirs(cache_dir, exist_ok=True)
+    except PermissionError:
+        sys.exit("Error: insufficient permissions to create cachedir {}".format(
+            cache_dir))
+    try:
+        backup_videoscreen()
+    except FileNotFoundError:
+        print("{} does not exist".format(guisettings))
+    xml_path = os.path.join(cache_dir, '{}-videodevice.xml'.format(output))
+    videodir_xml = parse_template(xml_path, videoscreen_template, output)
+    videodir_xml.getroot()
+    new_videoscreen = videodir_xml.find('videoscreen')
+    guisettings_xml = change_videoscreen(output, new_videoscreen)
