@@ -23,6 +23,9 @@ class Config:
             dest='names', action='append', default=None,
             help='sound device name, e.g. -n NVidia')
         argparser.add_argument(
+            '-l', '--list', action='store_true',
+            help='list all sound devices')
+        argparser.add_argument(
             '-t', '--timeout', metavar='TIMEOUT',
             dest='timeout', default=30, type=int,
             help='wait x seconds before giving up (default: 30 s)')
@@ -35,8 +38,18 @@ class DetectSound:
         self.timeout = gobject.timeout_add(
             (1000 * self.config.args['timeout']),
             self.on_timeout)
+        self.list = self.config.args['list']
         self.wanted_cards = None
         self.lookup_names = False
+
+        if self.list:
+            context = pyudev.Context()
+            for device in context.list_devices(subsystem='sound'):
+                if 'id' in device.attributes.keys() and 'number' in device.attributes.keys():
+                    print "{0}:{1}".format(device.attributes['number'].strip(), device.attributes['id'].strip())
+                #for a in device.attributes.keys():
+                #    print "{0}={1}".format(a, device.attributes.get(a))
+            sys.exit(0)
 
         if self.config.args['cards']:
             wanted_card_numbers = self.config.args['cards']
