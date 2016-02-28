@@ -24,8 +24,15 @@ class dbusRemote():
         self.dbusremote = bus.get_object("de.tvdr.vdr","/Remote")
         self.interface = 'de.tvdr.vdr.remote'
 
-    def sendkey(self,key):
+    def sendkey(self, key):
         answer, message = self.dbusremote.HitKey(dbus.String(key),dbus_interface=self.interface)
+        if answer == 250:
+            return True
+        else:
+            return False
+
+    def sendkeys(self, keys):
+        answer, message = self.dbusremote.HitKeys(keys,dbus_interface=self.interface)
         if answer == 250:
             return True
         else:
@@ -83,6 +90,31 @@ class dbusTimer():
         else:
             return False
 
+class dbusDevices():
+    '''wrapper for device interface provided by the dbus2vdr plugin'''
+    def __init__(self):
+        self.dbusdevice = bus.get_object("de.tvdr.vdr","/Devices")
+        self.interface = 'de.tvdr.vdr.device'
+
+    def get_primary(self):
+        index, number, has_decoder, is_primary, name = self.dbusdevice.GetPrimary(dbus_interface=self.interface)
+        return index, number, has_decoder, is_primary, name
+
+    def list(self):
+        devices = self.dbusdevice.List(dbus.String(key),dbus_interface=self.interface)
+        return devices
+
+class dbusSkindesigner():
+    '''wrapper for plugin interface provided by the dbus2vdr plugin'''
+    def __init__(self):
+        self.dbusplugins = bus.get_object("de.tvdr.vdr","/Plugins/skindesigner")
+        self.interface = 'de.tvdr.vdr.plugin'
+
+    def svdrpcommand(self, cmd, arg):
+        answer, reply = self.dbusplugins.SVDRPCommand(dbus.String(cmd), arg,dbus_interface=self.interface)
+        return answer, reply
+    
+
 def get_dbusPlugins():
     '''wrapper for dbus plugin list'''
     dbusplugins = bus.get_object("de.tvdr.vdr","/Plugins")
@@ -111,6 +143,10 @@ class dbusSofthddeviceFrontend():
         settings.frontend_active = 1
 
     def detach(self):
+        if devices.get_primary()[-1] == "softhddevice-openglosd":
+            remote.sendkeys(["menu", "back", "back"])
+        if settings.skindesigner:
+            plugins.svdrpcommand("DLIC", "")
         reply, answer = self.dbusfe.SVDRPCommand(dbus.String("DETA"),dbus.String(None),dbus_interface=self.interface)
         remote.disable()
         settings.frontend_active = 0
@@ -208,7 +244,9 @@ class Settings():
         for i in self.conf:
             if i in os.environ:
                 self.conf[i] = os.environ[i]
+        self.plugins = get_dbusPlugins()
         self.check_graphtftng()
+        self.check_skindesigner()
         try:
             self.get_event_devices()
         except:
@@ -216,13 +254,17 @@ class Settings():
             pass
 
     def check_graphtftng(self):
-        plugins = get_dbusPlugins()
-        if 'graphtftng' in plugins:
+        if 'graphtftng' in self.plugins:
             #print "found graphtftng"
             self.graphtftng = True
         else:
             self.graphtftng = False
 
+    def check_skindesigner(self):
+        if 'skindesigner' in self.plugins:
+            self.skindesigner = True
+        else:
+            self.skindesigner = False
 
     def get_event_devices(self):
         '''filter all connected input devices and watch those not used by eventlircd'''
@@ -437,6 +479,11 @@ if __name__ == '__main__':
     shutdown = dbusShutdown()
     setup = dbusSetup()
     timer = dbusTimer()
+    devices = dbusDevices()
+    try:
+        plugins = dbusSkindesigner()
+    except Exception as e:
+        print(e)
     settings = Settings()
 
     # attach frontend if vdr has not been started for a timer or an acpi
