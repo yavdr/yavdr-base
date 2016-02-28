@@ -144,7 +144,9 @@ class dbusSofthddeviceFrontend():
 
     def detach(self):
         if devices.get_primary()[-1] == "softhddevice-openglosd":
-            remote.sendkeys(["menu", "back", "back"])
+            remote.sendkeys(["menu", "back", "back", "back"])
+            time.sleep(0.25)
+            remote.sendkeys(["back", "back"])
         if settings.skindesigner:
             plugins.svdrpcommand("DLIC", "")
         reply, answer = self.dbusfe.SVDRPCommand(dbus.String("DETA"),dbus.String(None),dbus_interface=self.interface)
