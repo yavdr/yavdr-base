@@ -9,6 +9,7 @@ import socket
 import string
 import struct
 import datetime
+import time
 import syslog
 import pyudev
 from pyudev.glib import GUDevMonitorObserver
