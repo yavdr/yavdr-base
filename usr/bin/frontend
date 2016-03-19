@@ -171,9 +171,9 @@ class dbusSofthddeviceFrontend():
         settings.frontend_active = 1
 
     def detach(self):
-        if devices.get_primary()[-1] == "softhddevice-openglosd":
-            remote.sendkeys(["menu", "back", "back", "back"])
-            time.sleep(0.5)
+        #if devices.get_primary()[-1] == "softhddevice-openglosd":
+        remote.sendkeys(["menu", "back", "back", "back"])
+        time.sleep(0.5)
         remote.sendkeys(["back", "back"])
         time.sleep(0.5)
         if settings.skindesigner:
