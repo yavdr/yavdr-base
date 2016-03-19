@@ -593,20 +593,10 @@ if __name__ == '__main__':
             settings.timer = gobject.timeout_add(interval_ms, setUserInactive)
         remote.disable()
 
-    # def connect_eventlircd():
-    #     socket_path = "/var/run/lirc/lircd"
-    #     sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-    #     sock.connect(socket_path)
-    #     gobject.io_add_watch(sock, gobject.IO_IN, handler)
-
-    # def try_connection():
-    #     try:
-    #         connect_eventlircd()
-    #     except:
-    #         syslog.syslog(
-    #             "Error: vdr-frontend could not connect to eventlircd socket")
-
     lircconnection = lircConnection()
     dbusservice = dbusService(settings)
     loop = gobject.MainLoop()
-    loop.run()
+    try:
+        loop.run()
+    except KeyboardInterrupt:
+        sys.exit()
