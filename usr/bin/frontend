@@ -567,12 +567,8 @@ if __name__ == '__main__':
 
     # attach frontend if vdr has not been started for a timer or an acpi
     # wakeup event
-    print(settings.manualstart, type(settings.manualstart))
-    print(settings.acpi_wakeup, type(settings.acpi_wakeup))
-    print(settings.conf['start_always_detached'], type(settings.conf['start_always_detached']))
     if (settings.manualstart and settings.acpi_wakeup is None
             and settings.conf['start_always_detached'] in ('0', '2')):
-        print("attach frontend")
         resume(frontend.status())
     else:
         # set background visible when frontend is detached
