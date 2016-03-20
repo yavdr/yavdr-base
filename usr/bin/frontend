@@ -263,10 +263,7 @@ class Settings():
         self.timer = None
         self.updateDisplay()
         self.manualstart = shutdown.manualstart()
-        try:
-            self.acpi_wakeup = self.check_acpi()
-        except:
-            self.acpi_wakeup = None
+        self.acpi_wakeup = self.check_acpi()
         self.context = pyudev.Context()
         self.monitor = pyudev.Monitor.from_netlink(self.context)
         self.monitor.filter_by(subsystem='input')
@@ -567,7 +564,7 @@ if __name__ == '__main__':
 
     # attach frontend if vdr has not been started for a timer or an acpi
     # wakeup event
-    if (settings.manualstart and settings.acpi_wakeup is None
+    if (settings.manualstart and not settings.acpi_wakeup
             and settings.conf['start_always_detached'] in ('0', '2')):
         resume(frontend.status())
     else:
