@@ -171,7 +171,6 @@ class dbusSofthddeviceFrontend():
         settings.frontend_active = 1
 
     def detach(self):
-        #if devices.get_primary()[-1] == "softhddevice-openglosd":
         remote.sendkeys(["menu", "back", "back", "back"])
         time.sleep(0.5)
         remote.sendkeys(["back", "back"])
@@ -300,7 +299,7 @@ class Settings():
 
     def check_graphtftng(self):
         if 'graphtftng' in self.plugins:
-            #print "found graphtftng"
+            # print "found graphtftng"
             self.graphtftng = True
         else:
             self.graphtftng = False
@@ -335,7 +334,7 @@ class Settings():
         '''callback function to add/remove input devices'''
         if action == "add" and 'DEVNAME' in device:
             syslog.syslog("added %s" % device['DEVNAME'])
-            if not "eventlircd_enable" in device:
+            if "eventlircd_enable" not in device:
                 self.paths[device['DEVNAME']] = open(device['DEVNAME'], 'rb')
                 syslog.syslog(codecs.encode(u"watching %s: %s - %s" % (
                     device.parent['NAME'], device['DEVNAME'],
@@ -390,23 +389,27 @@ class Settings():
         return tempdisplay
 
     def check_acpi(self):
-        timestr = open('/var/cache/vdr/acpiwakeup.time.old',
-                       'r').read().splitlines()[0]
-        wakeup = datetime.datetime.strptime(timestr, "%Y-%m-%d %H:%M:%S")
-        now = datetime.datetime.utcnow()
-        syslog.syslog(u"acip-wakeup.time.old hatte Wert: %s" % (
-            wakeup.ctime()))
-        syslog.syslog(u"vergleiche mit jetzt: %s" % (now.ctime()))
-        if wakeup < now:
-            d = now - wakeup
-        else:
-            d = wakeup - now
-        if d.seconds > 360:
-            syslog.syslog("assuming manual start")
+        try:
+            with open('/var/cache/vdr/acpiwakeup.time.old', 'r') as f:
+                timestr = f.read().splitlines()[0]
+        except IOError:
             return False
         else:
-            syslog.syslog("assuming start for acpi-wakeup")
-            return True
+            wakeup = datetime.datetime.strptime(timestr, "%Y-%m-%d %H:%M:%S")
+            now = datetime.datetime.utcnow()
+            syslog.syslog(u"acip-wakeup.time.old hatte Wert: %s" % (
+                wakeup.ctime()))
+            syslog.syslog(u"vergleiche mit jetzt: %s" % (now.ctime()))
+            if wakeup < now:
+                d = now - wakeup
+            else:
+                d = wakeup - now
+            if d.seconds > 360:
+                syslog.syslog("assuming manual start")
+                return False
+            else:
+                syslog.syslog("assuming start for acpi-wakeup")
+                return True
 
 
 class dbusService(dbus.service.Object):
@@ -517,7 +520,7 @@ class lircConnection():
             try:
                 code, count, cmd, device = string.split(line, " ")[:4]
                 if count != "0":
-                    #syslog.syslog('repeated keypress')
+                    # syslog.syslog('repeated keypress')
                     return True
                 else:
                     try:
