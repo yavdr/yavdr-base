@@ -68,7 +68,12 @@ class dbusShutdown():
         self.interface = 'de.tvdr.vdr.shutdown'
 
     def manualstart(self):
-        return self.dbusshutdown.ManualStart(dbus_interface=self.interface)
+        with open('/proc/uptime', 'r') as f:
+            uptime_seconds = float(f.readline().split()[0]) 
+        if uptime_seconds < 3600:
+            return self.dbusshutdown.ManualStart(dbus_interface=self.interface)
+        else:
+            return True
 
     def confirmShutdown(self, user=False):
         code, message, shutdownhooks, message = (
@@ -169,6 +174,7 @@ class dbusSofthddeviceFrontend():
             dbus.String("ATTA"), display, dbus_interface=self.interface)
         remote.enable()
         settings.frontend_active = 1
+        settings.wants_shutdown = False
 
     def detach(self):
         remote.sendkeys(["menu", "back", "back", "back"])
@@ -181,6 +187,8 @@ class dbusSofthddeviceFrontend():
             dbus.String("DETA"), dbus.String(None),
             dbus_interface=self.interface)
         remote.disable()
+        if settings.wants_shutdown:
+            setUserInactive()
         settings.frontend_active = 0
 
     def resume(self, status):
@@ -260,6 +268,7 @@ class Settings():
         self.frontend_active = 0
         self.env = os.environ
         self.timer = None
+        self.wants_shutdown = False
         self.updateDisplay()
         self.manualstart = shutdown.manualstart()
         self.acpi_wakeup = self.check_acpi()
@@ -395,7 +404,11 @@ class Settings():
         except IOError:
             return False
         else:
-            wakeup = datetime.datetime.strptime(timestr, "%Y-%m-%d %H:%M:%S")
+            try:
+                wakeup = datetime.datetime.strptime(timestr, "%Y-%m-%d %H:%M:%S")
+            except ValueError:
+                syslog.syslog("WARNING: invalid timestamp in /var/cache/vdr/acpiwakeup.time.old")
+                return False
             now = datetime.datetime.utcnow()
             syslog.syslog(u"acip-wakeup.time.old hatte Wert: %s" % (
                 wakeup.ctime()))
@@ -537,12 +550,14 @@ class lircConnection():
                 else:
                     resume(frontend.status())
             elif cmd == settings.conf['key_power']:  # "KEY_POWER2":
+                settings.wants_shutdown = True
                 if frontend.status() == "NOT_SUSPENDED":
                     settings.timer = gobject.timeout_add(15000, soft_detach)
                     settings.frontend_active = 0
                 else:
                     send_shutdown()
             else:
+                settings.wants_shutdown = False
                 if settings.frontend_active == 0:
                     resume(frontend.status())
                     settings.frontend_active = 1
