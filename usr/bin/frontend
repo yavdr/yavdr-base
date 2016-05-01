@@ -5,6 +5,7 @@ import os
 import codecs
 import subprocess
 import gobject
+#from gi.repository import GObject as gobject
 import socket
 import string
 import struct
@@ -13,20 +14,46 @@ import time
 import syslog
 import pyudev
 from pyudev.glib import GUDevMonitorObserver
+from functools import wraps, partial
 import dbus
 import dbus.service
 from dbus.mainloop.glib import DBusGMainLoop
 
+vdr_addr = 'de.tvdr.vdr'
 DBusGMainLoop(set_as_default=True)
 bus = dbus.SystemBus()
+auto_get_object = partial(bus.get_object, bus_name=vdr_addr,
+                          follow_name_owner_changes=True)
 
 
-class dbusRemote():
+def _check_call(func):
+    @wraps(func)
+    def check_call_wrapper(*args, **kwargs):
+        n = 0
+        while True:
+            try:
+                return func(*args, **kwargs)
+            except dbus.exceptions.DBusException as e:
+                print(time.ctime(), e)
+                error_type = e.get_dbus_name()
+                if error_type == 'org.freedesktop.DBus.Error.ServiceUnknown':
+                    syslog.syslog("VDR not reachable")
+                    sys.exit(1)
+                elif error_type == 'org.freedesktop.DBus.Error.NoReply':
+                    syslog.syslog("dbus2vdr did not respond")
+                    n += 1
+                    if n > 3:
+                        return False
+    return check_call_wrapper
+
+
+class dbusRemote(object):
     '''wrapper for remote interface provided by the dbus2vdr plugin'''
     def __init__(self):
-        self.dbusremote = bus.get_object("de.tvdr.vdr", "/Remote")
+        self.dbusremote = auto_get_object(object_path="/Remote")
         self.interface = 'de.tvdr.vdr.remote'
 
+    @_check_call
     def sendkey(self, key):
         answer, message = self.dbusremote.HitKey(dbus.String(key),
                                                  dbus_interface=self.interface)
@@ -35,6 +62,7 @@ class dbusRemote():
         else:
             return False
 
+    @_check_call
     def sendkeys(self, keys):
         answer, message = self.dbusremote.HitKeys(keys,
                                                   dbus_interface=self.interface
@@ -44,37 +72,42 @@ class dbusRemote():
         else:
             return False
 
+    @_check_call
     def enable(self):
         answer, message = self.dbusremote.Enable(dbus_interface=self.interface)
         if answer == 250:
             return True
 
+    @_check_call
     def disable(self):
         answer, message = self.dbusremote.Disable(
             dbus_interface=self.interface)
         if answer == 250:
             return True
 
+    @_check_call
     def status(self):
         answer, message = self.dbusremote.Status(dbus_interface=self.interface)
         if answer == 250:
             return True
 
 
-class dbusShutdown():
+class dbusShutdown(object):
     '''wrapper for shutdown interface provided by the dbus2vdr plugin'''
     def __init__(self):
-        self.dbusshutdown = bus.get_object("de.tvdr.vdr", "/Shutdown")
+        self.dbusshutdown = auto_get_object(object_path="/Shutdown")
         self.interface = 'de.tvdr.vdr.shutdown'
 
+    @_check_call
     def manualstart(self):
         with open('/proc/uptime', 'r') as f:
-            uptime_seconds = float(f.readline().split()[0]) 
+            uptime_seconds = float(f.readline().split()[0])
         if uptime_seconds < 3600:
             return self.dbusshutdown.ManualStart(dbus_interface=self.interface)
         else:
             return True
 
+    @_check_call
     def confirmShutdown(self, user=False):
         code, message, shutdownhooks, message = (
             self.dbusshutdown.ConfirmShutdown(dbus.Boolean(user),
@@ -93,9 +126,10 @@ class dbusShutdown():
 class dbusSetup():
     '''wrapper for setup interface provided by the dbus2vdr plugin'''
     def __init__(self):
-        self.dbussetup = bus.get_object("de.tvdr.vdr", "/Setup")
+        self.dbussetup = auto_get_object(object_path="/Setup")
         self.interface = 'de.tvdr.vdr.setup'
 
+    @_check_call
     def vdrsetupget(self, option):
         return self.dbussetup.Get(dbus.String(option),
                                   dbus_interface=self.interface)
@@ -103,9 +137,10 @@ class dbusSetup():
 
 class dbusTimer():
     def __init__(self):
-        self.dbustimer = bus.get_object("de.tvdr.vdr", "/Timers")
+        self.dbustimer = auto_get_object(object_path="/Timers")
         self.interface = 'de.tvdr.vdr.timer'
 
+    @_check_call
     def wakeup_for_Timer(self):
         status, tid, rel, startt, stopt, event = self.dbustimer.Next(
             dbus_interface=self.interface)
@@ -118,14 +153,16 @@ class dbusTimer():
 class dbusDevices():
     '''wrapper for device interface provided by the dbus2vdr plugin'''
     def __init__(self):
-        self.dbusdevice = bus.get_object("de.tvdr.vdr", "/Devices")
+        self.dbusdevice = auto_get_object(object_path="/Devices")
         self.interface = 'de.tvdr.vdr.device'
 
+    @_check_call
     def get_primary(self):
         index, number, has_decoder, is_primary, name = (
             self.dbusdevice.GetPrimary(dbus_interface=self.interface))
         return index, number, has_decoder, is_primary, name
 
+    @_check_call
     def list(self):
         devices = self.dbusdevice.List(dbus_interface=self.interface)
         return devices
@@ -138,15 +175,17 @@ class dbusSkindesigner():
                                           "/Plugins/skindesigner")
         self.interface = 'de.tvdr.vdr.plugin'
 
+    @_check_call
     def svdrpcommand(self, cmd, arg):
         answer, reply = self.dbusplugins.SVDRPCommand(
             dbus.String(cmd), arg, dbus_interface=self.interface)
         return answer, reply
 
 
+@_check_call
 def get_dbusPlugins():
     '''wrapper for dbus plugin list'''
-    dbusplugins = bus.get_object("de.tvdr.vdr", "/Plugins")
+    dbusplugins = auto_get_object(object_path="/Plugins")
     raw = dbusplugins.List(dbus_interface="de.tvdr.vdr.pluginmanager")
     plugins = {}
     if len(raw) > 0:
@@ -155,19 +194,21 @@ def get_dbusPlugins():
     return plugins
 
 
-class dbusSofthddeviceFrontend():
+class dbusSofthddeviceFrontend(object):
     '''handler for softhddevice's svdrp plugin command interface
     provided by the dbus2vdr plugin'''
     def __init__(self):
-        self.dbusfe = bus.get_object("de.tvdr.vdr", "/Plugins/softhddevice")
+        self.dbusfe = auto_get_object(object_path="/Plugins/softhddevice")
         self.interface = 'de.tvdr.vdr.plugin'
 
+    @_check_call
     def status(self):
         code, mode = self.dbusfe.SVDRPCommand(dbus.String("STAT"),
                                               dbus.String(None),
                                               dbus_interface=self.interface)
         return mode.split()[-1]
 
+    @_check_call
     def attach(self):
         display = dbus.String("-d %s" % (settings.env["DISPLAY"]))
         reply, answer = self.dbusfe.SVDRPCommand(
@@ -176,6 +217,7 @@ class dbusSofthddeviceFrontend():
         settings.frontend_active = 1
         settings.wants_shutdown = False
 
+    @_check_call
     def detach(self):
         remote.sendkeys(["menu", "back", "back", "back"])
         time.sleep(0.5)
@@ -191,6 +233,7 @@ class dbusSofthddeviceFrontend():
             setUserInactive()
         settings.frontend_active = 0
 
+    @_check_call
     def resume(self, status):
         reply, answer = self.dbusfe.SVDRPCommand(dbus.String("RESU"),
                                                  dbus.String(None),
@@ -199,7 +242,7 @@ class dbusSofthddeviceFrontend():
 
 
 def setUserInactive():
-    dbusshutdown = bus.get_object("de.tvdr.vdr", "/Shutdown")
+    dbusshutdown = auto_get_object(object_path="/Shutdown")
     dbusshutdown.SetUserInactive(dbus_interface='de.tvdr.vdr.shutdown')
     send_shutdown()
     settings.time = gobject.timeout_add(300000, send_shutdown)
@@ -238,7 +281,7 @@ def soft_detach():
 
 def graphtftng_switch():
     if settings.graphtftng:
-        dbusgraph = bus.get_object("de.tvdr.vdr", "/Plugins/graphtftng")
+        dbusgraph = auto_get_object(object_path="/Plugins/graphtftng")
         if settings.frontend_active == 0:
             dbusgraph.SVDRPCommand(
                 dbus.String('TVIEW'),
@@ -405,9 +448,11 @@ class Settings():
             return False
         else:
             try:
-                wakeup = datetime.datetime.strptime(timestr, "%Y-%m-%d %H:%M:%S")
+                wakeup = datetime.datetime.strptime(timestr,
+                                                    "%Y-%m-%d %H:%M:%S")
             except ValueError:
-                syslog.syslog("WARNING: invalid timestamp in /var/cache/vdr/acpiwakeup.time.old")
+                syslog.syslog(("WARNING: invalid timestamp in "
+                               "/var/cache/vdr/acpiwakeup.time.old"))
                 return False
             now = datetime.datetime.utcnow()
             syslog.syslog(u"acip-wakeup.time.old hatte Wert: %s" % (
