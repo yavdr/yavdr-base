@@ -115,4 +115,8 @@ if __name__ == '__main__':
     global main
     main = Main()
     loop = GObject.MainLoop()
-    loop.run()
+    try:
+        loop.run()
+    except KeyboardInterrupt:
+        loop.quit()
+        sys.exit()
