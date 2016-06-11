@@ -16,13 +16,14 @@ videoscreen_template = """<settings>
 
 
 def get_output_names():
-    """get display name from xrandr for DISPLAY environment variable"""
-    output = [
-        l for l in subprocess.check_output(
-            ["xrandr"],
-            env={"DISPLAY": os.environ["DISPLAY"]}
-        ).decode("utf-8").splitlines()
-    ]
+    """
+    get connected display names from xrandr for a given DISPLAY 
+    environment variable
+    """
+    output = subprocess.check_output(
+      ["xrandr"],
+      env={"DISPLAY": os.environ["DISPLAY"]}
+    ).decode("utf-8").splitlines()
     return [l.split()[0] for l in output if " connected " in l]
 
 
