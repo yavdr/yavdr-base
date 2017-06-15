@@ -1,16 +1,15 @@
 #!/usr/bin/python3
-
-
+import argparse
+import logging
+import os
+import shlex
+import signal
+import subprocess
+import sys
 from gi.repository import GObject
 import dbus
 from dbus.mainloop.glib import DBusGMainLoop
 dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
-import logging
-import argparse
-import os
-import signal
-import subprocess
-import sys
 from dbus2vdr import DBus2VDR
 
 
@@ -49,7 +48,10 @@ class Main:
         self.dbus2vdr.onSignal("Stop", self.onStop)
         self.vdrStatus = 0
         self.proc = None
-        self.cmd = self.config.args['command']
+        try:
+            self.cmd = shlex.split(self.config.args['command'])
+        except Exception as e:
+            sys.exit('error while parsing command: {}'.format(e))
         self.oneshot = self.config.args['oneshot']
         self.timeout = self.config.args['timeout']
         self.exit = self.config.args['exit']
@@ -80,8 +82,8 @@ class Main:
             GObject.source_remove(self.timeout_id)
         logging.info("VDR Ready")
         self.vdrStatus == 1
-        self.proc = subprocess.Popen("exec " + self.cmd,
-                                     shell=True, env=self.environ)
+        self.proc = subprocess.Popen(self.cmd,
+                                     shell=False, env=self.environ)
         self.pid = self.proc.pid
         self.child = GObject.child_watch_add(self.pid, self.onExit)
 
