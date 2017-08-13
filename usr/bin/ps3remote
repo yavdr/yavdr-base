@@ -37,13 +37,19 @@ for element in dir(uinput):
 
 
 class devinput():
+    timers = {}
 
     def __init__(self):
-        self.timer = None
         parser = Options()
         self.options = parser.get_opts()
         #self.socketpath = self.options.socket
         self.uinputdev = uinput.Device(events, self.options.name)
+
+    def clear_timers(self):
+        for key, t in self.timers.iteritems():
+            gobject.source_remove(t)
+            self.uinputdev.emit((1, key), 0)
+        self.timers = {}
 
     def eventhandler(self, sock, *args):
         event = self.socketpath.read(inputEventSize)
@@ -51,14 +57,14 @@ class devinput():
                                                             event)
         if typeev == 0 and code == 0 and value == 0:  # sync event
             pass
-        elif value == 0:
-            gobject.source_remove(self.timer)
+        elif typeev == 1 and value == 0:  # key release
+            self.clear_timers()
+        elif typeev == 1 and value == 1:  # key down
+            self.clear_timers()
+            if not code in self.timers.keys():
+                self.timers[code] = gobject.timeout_add(self.options.repeat,
+                                                        self.repeatkey, code)
             self.uinputdev.emit((typeev, code), value)
-        else:
-            self.uinputdev.emit((typeev, code), value)
-            if typeev == 1:
-                self.timer = gobject.timeout_add(self.options.repeat,
-                                                 self.repeatkey, code)
         return True
 
     def repeatkey(self, code):
