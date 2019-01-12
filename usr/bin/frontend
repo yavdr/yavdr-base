@@ -401,7 +401,7 @@ class Settings():
         try:
             with open('/var/cache/vdr/acpiwakeup.time.old', 'r') as f:
                 timestr = f.read().splitlines()[0]
-        except IOError:
+        except (IOError, IndexError):
             return False
         else:
             try:
